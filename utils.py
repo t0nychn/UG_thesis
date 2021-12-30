@@ -21,7 +21,7 @@ def env():
 # data manipulation
 def load(filepath, index='date'):
     """Shorthand for standardized import"""
-    return pd.read_csv(filepath, parse_dates=True, index_col=index, dayfirst=True)
+    return pd.read_csv(filepath, parse_dates=True, index_col=index, dayfirst=True).sort_index()
 
 def clean_series(col, df, standardize=True, seasonal=True):
     """standardize=True -> removes effect of changing variance by dividing values by rolling annual standard deviation. 
@@ -34,32 +34,32 @@ def clean_series(col, df, standardize=True, seasonal=True):
     if seasonal:
         mth_avg = series.index.map(lambda x: series.groupby(series.index.month).mean().loc[x.month])
         series = series - mth_avg
-    return pd.DataFrame(series.rename(col)).dropna()
+    return pd.DataFrame(series.rename(col)).dropna().sort_index()
 
-def calc_shock(col, df, method='mad2', clean=True, standardize=True, seasonal=True):
+def calc_shock(col, df, method='mad-12', clean=True, standardize=True, seasonal=True):
     """Calculates shock from index value. Can use either naive method in Exploratory1 or 
     moving average method in Exploratory2.
     Returns input column as new DataFrame."""
     series = df.copy(deep=True)[col]
     if method[:3] == 'mad':
-        ma = series.rolling(int(method[-1])).mean()
+        ma = series.rolling(int(method.split('-')[-1])).mean()
         series = (series - ma).diff()
         if clean:
             return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), standardize=standardize, seasonal=seasonal)
         else:
-            return pd.DataFrame(series.rename(col)).dropna()
+            return pd.DataFrame(series.rename(col)).dropna().sort_index()
     elif method == 'naive':
         series = series.pct_change().diff()
         if clean:
             return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), standardize=standardize, seasonal=seasonal)
         else:
-            return pd.DataFrame(series.rename(col)).dropna()
+            return pd.DataFrame(series.rename(col)).dropna().sort_index()
     else:
         raise ValueError('Check correct method specified!')
 
 
 # data visualization
-def draw(models, start=2, periods=12, conf_int=True, legend=True, cumulative=False, figsize=(6.4,4.8), labels=None, colors=None, alpha=0.1):
+def draw(models, start=1, periods=12, conf_int=True, legend=True, cumulative=False, figsize=(6.4,4.8), labels=None, colors=None, alpha=0.1):
     plt.figure(figsize=figsize)
     for i in range(len(models)):
         model = models[i]
