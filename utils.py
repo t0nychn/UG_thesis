@@ -23,33 +23,35 @@ def load(filepath, index='date'):
     """Shorthand for standardized import"""
     return pd.read_csv(filepath, parse_dates=True, index_col=index, dayfirst=True)
 
-def clean_series(col, df, seasonal=True):
-    """Removes effect of changing variance by dividing values by rolling annual std. 
-    Removes effect of seasonality by subtracting values from average of each fixed month across series.
+def clean_series(col, df, standardize=True, seasonal=True):
+    """standardize=True -> removes effect of changing variance by dividing values by rolling annual standard deviation. 
+    seasonal=True -> removes effect of seasonality by subtracting values from collective average of each month across series.
     Returns input column as new DataFrame."""
-    series = df.copy(deep=True)[col]
-    ann_vol = series.index.map(lambda x: series.groupby(series.index.year).std().loc[x.year])
-    series = series/ann_vol
+    if standardize:
+        series = df.copy(deep=True)[col]
+        ann_vol = series.index.map(lambda x: series.groupby(series.index.year).std().loc[x.year])
+        series = series/ann_vol
     if seasonal:
         mth_avg = series.index.map(lambda x: series.groupby(series.index.month).mean().loc[x.month])
         series = series - mth_avg
     return pd.DataFrame(series.rename(col)).dropna()
 
-def calc_shock(col, df, method='mad2', clean=True, seasonal=True):
+def calc_shock(col, df, method='mad2', clean=True, standardize=True, seasonal=True):
     """Calculates shock from index value. Can use either naive method in Exploratory1 or 
-    moving average method in Exploratory2."""
+    moving average method in Exploratory2.
+    Returns input column as new DataFrame."""
     series = df.copy(deep=True)[col]
     if method[:3] == 'mad':
         ma = series.rolling(int(method[-1])).mean()
         series = (series - ma).diff()
         if clean:
-            return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), seasonal=seasonal)
+            return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), standardize=standardize, seasonal=seasonal)
         else:
             return pd.DataFrame(series.rename(col)).dropna()
     elif method == 'naive':
         series = series.pct_change().diff()
         if clean:
-            return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), seasonal=seasonal)
+            return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), standardize=standardize, seasonal=seasonal)
         else:
             return pd.DataFrame(series.rename(col)).dropna()
     else:
@@ -57,20 +59,33 @@ def calc_shock(col, df, method='mad2', clean=True, seasonal=True):
 
 
 # data visualization
-def draw(models, start=2, periods=12, conf_int=True, legend=True, cumulative=False):
+def draw(models, start=2, periods=12, conf_int=True, legend=True, cumulative=False, figsize=(6.4,4.8), labels=None, colors=None, alpha=0.1):
+    plt.figure(figsize=figsize)
     for i in range(len(models)):
         model = models[i]
         if cumulative:
-            plt.plot(np.cumsum(model.params[start:].reset_index(drop=True)), label=f'series{i+1}')
+            if labels != None:
+                plt.plot(np.cumsum(model.params[start:].reset_index(drop=True)), label=(labels[i] if labels != None else None), color=(colors[i] if colors != None else None))
+            else:
+                plt.plot(np.cumsum(model.params[start:].reset_index(drop=True)), label=f'series{i+1}')
         else:
-            plt.plot(model.params[start:].reset_index(drop=True), label=f'series{i+1}') 
-    if conf_int:
-        if cumulative:
-            for model in models:
-                plt.fill_between([*range(periods+1)], np.cumsum(model.conf_int()[0][start:]), np.cumsum(model.conf_int()[1][start:]), alpha=.1)
-        else:
-            for model in models:
-                plt.fill_between([*range(periods+1)], model.conf_int()[0][start:], model.conf_int()[1][start:], alpha=.1)
+            if labels != None:
+                plt.plot(model.params[start:].reset_index(drop=True), label=(labels[i] if labels != None else None), color=(colors[i] if colors != None else None))
+            else:
+                plt.plot(model.params[start:].reset_index(drop=True), label=f'series{i+1}')
+        if conf_int:
+            if cumulative:
+                confs = models[i].conf_int()
+                if colors != None:
+                    plt.fill_between([*range(periods+1)], np.cumsum(confs[0][start:]), np.cumsum(confs[1][start:]), alpha=alpha, color=colors[i])
+                else:
+                    plt.fill_between([*range(periods+1)], np.cumsum(confs[0][start:]), np.cumsum(confs[1][start:]), alpha=alpha)
+            else:
+                confs = models[i].conf_int()
+                if colors != None:
+                    plt.fill_between([*range(periods+1)], confs[0][start:], confs[1][start:], alpha=alpha, color=colors[i])
+                else:
+                    plt.fill_between([*range(periods+1)], confs[0][start:], confs[1][start:], alpha=alpha)
     plt.axhline(y=0, color='grey', linestyle='--')
     if legend:
         plt.legend()
