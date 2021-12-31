@@ -43,7 +43,7 @@ def calc_shock(col, df, method='mad-12', clean=True, standardize=True, seasonal=
     series = df.copy(deep=True)[col]
     if method[:3] == 'mad':
         ma = series.rolling(int(method.split('-')[-1])).mean()
-        series = (series - ma).diff()
+        series = series.pct_change() - ma.pct_change()
         if clean:
             return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), standardize=standardize, seasonal=seasonal)
         else:
@@ -59,7 +59,7 @@ def calc_shock(col, df, method='mad-12', clean=True, standardize=True, seasonal=
 
 
 # data visualization
-def draw(models, start=1, periods=12, conf_int=True, legend=True, cumulative=False, figsize=(6.4,4.8), labels=None, colors=None, alpha=0.1):
+def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cumulative=False, figsize=(6.4,4.8), labels=None, colors=None, alpha=0.1):
     plt.figure(figsize=figsize)
     for i in range(len(models)):
         model = models[i]
@@ -73,19 +73,21 @@ def draw(models, start=1, periods=12, conf_int=True, legend=True, cumulative=Fal
                 plt.plot(model.params[start:].reset_index(drop=True), label=(labels[i] if labels != None else None), color=(colors[i] if colors != None else None))
             else:
                 plt.plot(model.params[start:].reset_index(drop=True), label=f'series{i+1}')
-        if conf_int:
+        if conf_int or bse:
+            if bse:
+                confs = pd.DataFrame({0: [model.params[x] - model.bse[x] for x in range(start, len(model.params))], 1: [model.params[x] + model.bse[x] for x in range(start, len(model.params))]})
+            elif conf_int:
+                confs = model.conf_int()[start:]
             if cumulative:
-                confs = models[i].conf_int()
                 if colors != None:
-                    plt.fill_between([*range(periods+1)], np.cumsum(confs[0][start:]), np.cumsum(confs[1][start:]), alpha=alpha, color=colors[i])
+                    plt.fill_between([*range(periods+1)], np.cumsum(confs[0]), np.cumsum(confs[1]), alpha=alpha, color=colors[i])
                 else:
-                    plt.fill_between([*range(periods+1)], np.cumsum(confs[0][start:]), np.cumsum(confs[1][start:]), alpha=alpha)
+                    plt.fill_between([*range(periods+1)], np.cumsum(confs[0]), np.cumsum(confs[1]), alpha=alpha)
             else:
-                confs = models[i].conf_int()
                 if colors != None:
-                    plt.fill_between([*range(periods+1)], confs[0][start:], confs[1][start:], alpha=alpha, color=colors[i])
+                    plt.fill_between([*range(periods+1)], confs[0], confs[1], alpha=alpha, color=colors[i])
                 else:
-                    plt.fill_between([*range(periods+1)], confs[0][start:], confs[1][start:], alpha=alpha)
+                    plt.fill_between([*range(periods+1)], confs[0], confs[1], alpha=alpha)
     plt.axhline(y=0, color='grey', linestyle='--')
     if legend:
         plt.legend()
@@ -103,7 +105,7 @@ def dl(y_col, x_col, df, lags=12):
     df_copy = df_copy.dropna()
     return sm.OLS(df_copy[y_col], sm.add_constant(df_copy[x_cols])).fit()
 
-def ardl(y_col, x_col, df, lags=[1, 12]):
+def ardl(y_col, x_col, df, lags=[1, 6]):
     """Regresses y against lagged values of itself and x"""
     df_copy = df.copy(deep=True)
     x_cols = []
