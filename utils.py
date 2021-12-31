@@ -119,3 +119,29 @@ def ardl(y_col, x_col, df, lags=[1, 6]):
         x_cols.append(new_col)
     df_copy = df_copy.dropna()
     return sm.OLS(df_copy[y_col], sm.add_constant(df_copy[x_cols])).fit()
+
+def time_shift(y_col, x_col, df, start_yr=2000, end_yr=2020, direction='robust',model=dl, periods=12, start=1):
+    """See Exploratory4"""
+    coeffs_f = {i: [] for i in range(periods+1)}
+    coeffs_b = {i: [] for i in range(periods+1)}
+    coeffs_robust = {i: [] for i in range(periods+1)}
+
+    for i in range(end_yr - start_yr):
+        year = start_yr + i
+        model_f = model(y_col, x_col, df[f'{year}':])
+        model_b = model(y_col, x_col, df[:f'{year}'])
+        params_f = np.cumsum(model_f.params[start:])
+        params_b = np.cumsum(model_b.params[start:])
+        for i in range(periods+1):
+            coeffs_f[i].append(params_f[i])
+            coeffs_b[i].append(params_b[i])
+            coeffs_robust[i] = np.array(coeffs_f[i]) + np.array(coeffs_b[i])
+    
+    if direction == 'r':
+        return coeffs_robust
+    elif direction == 'f':
+        return coeffs_f
+    elif direction == 'b':
+        return coeffs_b
+    else:
+        raise ValueError("Specify direction: 'f' (slices forward in time), 'b' (slices back in time), or 'r' (directionally robust)")
