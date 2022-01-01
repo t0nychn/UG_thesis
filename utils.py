@@ -135,7 +135,7 @@ def time_shift(y_col, x_col, df, start_yr=2000, end_yr=2018, direction='r', mode
         for i in range(periods+1):
             coeffs_f[i].append(params_f[i])
             coeffs_b[i].append(params_b[i])
-            coeffs_robust[i] = np.array(coeffs_f[i]) + np.array(coeffs_b[i])
+            coeffs_robust[i] = (np.array(coeffs_f[i]) + np.array(coeffs_b[i]))/2
     
     if direction == 'r':
         return pd.DataFrame(coeffs_robust, index=pd.to_datetime([*(start_yr + i for i in range(end_yr-start_yr))], format='%Y'))
