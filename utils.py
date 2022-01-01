@@ -1,4 +1,4 @@
-"""Sets up environment for exploratory analyses"""
+"""Sets up environment & provides API shorthand for functions"""
 import sys
 import numpy as np
 import pandas as pd
@@ -120,7 +120,7 @@ def ardl(y_col, x_col, df, lags=[1, 6]):
     df_copy = df_copy.dropna()
     return sm.OLS(df_copy[y_col], sm.add_constant(df_copy[x_cols])).fit()
 
-def time_shift(y_col, x_col, df, start_yr=2000, end_yr=2021, direction='robust', model=dl, periods=12, start=1):
+def time_shift(y_col, x_col, df, start_yr=2000, end_yr=2018, direction='r', model=dl, periods=12, start=1):
     """See Exploratory4"""
     coeffs_f = {i: [] for i in range(periods+1)}
     coeffs_b = {i: [] for i in range(periods+1)}
@@ -128,8 +128,8 @@ def time_shift(y_col, x_col, df, start_yr=2000, end_yr=2021, direction='robust',
 
     for i in range(end_yr - start_yr):
         year = start_yr + i
-        model_f = model(y_col, x_col, df[f'{year}':])
-        model_b = model(y_col, x_col, df[:f'{year}'])
+        model_f = model(y_col, x_col, df[f'{year}-01-01':])
+        model_b = model(y_col, x_col, df[:f'{year}-12-31'])
         params_f = np.cumsum(model_f.params[start:])
         params_b = np.cumsum(model_b.params[start:])
         for i in range(periods+1):
@@ -138,10 +138,10 @@ def time_shift(y_col, x_col, df, start_yr=2000, end_yr=2021, direction='robust',
             coeffs_robust[i] = np.array(coeffs_f[i]) + np.array(coeffs_b[i])
     
     if direction == 'r':
-        return pd.DataFrame(coeffs_robust, index=pd.to_datetime((start_yr + i for i in range(end_yr-start_yr)), format='%Y'))
+        return pd.DataFrame(coeffs_robust, index=pd.to_datetime([*(start_yr + i for i in range(end_yr-start_yr))], format='%Y'))
     elif direction == 'f':
-        return pd.DataFrame(coeffs_f, index=pd.to_datetime((start_yr + i for i in range(end_yr-start_yr)), format='%Y'))
+        return pd.DataFrame(coeffs_f, index=pd.to_datetime([*(start_yr + i for i in range(end_yr-start_yr))], format='%Y'))
     elif direction == 'b':
-        return pd.DataFrame(coeffs_b, index=pd.to_datetime((start_yr + i for i in range(end_yr-start_yr)), format='%Y'))
+        return pd.DataFrame(coeffs_b, index=pd.to_datetime([*(start_yr + i for i in range(end_yr-start_yr))], format='%Y'))
     else:
         raise ValueError("Specify direction: 'f' (slices forward in time), 'b' (slices back in time), or 'r' (directionally robust)")
