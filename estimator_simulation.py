@@ -27,8 +27,8 @@ def rand_ints_short():
     plt.show()
 
 def trending_rand_ints():
-    a = [i+random.randrange(-100, 100) for i in range(50)]
-    e = [0.5*(np.mean(a[:i+1]) + np.mean(a[i:])) for i in range(len(a)-1)]
+    a = [2*i+random.randrange(-100, 100) for i in range(50)]
+    e = [0.5*(np.mean(a[:i+1]) + np.mean(a[i:])) for i in range(1, len(a)-1)]
     e.insert(0, np.NaN)
 
     plt.plot(a, label='actual')
