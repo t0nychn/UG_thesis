@@ -145,3 +145,16 @@ def time_shift(y_col, x_col, df, start_yr=2000, end_yr=2018, direction='r', mode
         return pd.DataFrame(coeffs_b, index=pd.to_datetime([*(start_yr + i for i in range(end_yr-start_yr))], format='%Y'))
     else:
         raise ValueError("Specify direction: 'f' (slices forward in time), 'b' (slices back in time), or 'r' (directionally robust)")
+
+def time_shift_naive(y_col, x_col, df, start_yr=2000, end_yr=2018, model=dl, periods=12, start=1):
+    """See Pres1-Naive"""
+    coeffs = {i: [] for i in range(periods+1)}
+
+    for i in range(end_yr - start_yr):
+        year = start_yr + i
+        estimate = model(y_col, x_col, df[f'{year}-01-01':f'{year+1}-02-02']) # jan first year up to and including feb second year
+        params = np.cumsum(estimate.params[start:])
+        for i in range(periods+1):
+            coeffs[i].append(params[i])
+    
+    return pd.DataFrame(coeffs, index=pd.to_datetime([*(start_yr + i for i in range(end_yr-start_yr))], format='%Y'))
