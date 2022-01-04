@@ -152,7 +152,7 @@ def time_shift_naive(y_col, x_col, df, start_yr=2000, end_yr=2018, model=dl, per
 
     for i in range(end_yr - start_yr):
         year = start_yr + i
-        estimate = model(y_col, x_col, df[f'{year}-01-01':f'{year+1}-02-02']) # jan first year up to and including feb second year
+        estimate = model(y_col, x_col, df[f'{year}-01-01':f'{year+2}-01-01']) # jan first year up to jan second year to get 12 datapoints (since we lag 12)
         params = np.cumsum(estimate.params[start:])
         for i in range(periods+1):
             coeffs[i].append(params[i])
