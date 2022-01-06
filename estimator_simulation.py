@@ -12,6 +12,7 @@ def rand_ints():
     plt.axhline(np.mean(a), label='actual mean', linestyle='--', color='blue', alpha=0.5)
     plt.axhline(np.mean(e), label='mean of estimates', linestyle='--', color='red', alpha=0.5)
     plt.legend()
+    print(np.mean(a) - np.mean(e[1:]))
     plt.show()
 
 def rand_ints_short():
@@ -24,6 +25,7 @@ def rand_ints_short():
     plt.axhline(np.mean(a), label='actual mean', linestyle='--', color='blue', alpha=0.5)
     plt.axhline(np.mean(e), label='mean of estimates', linestyle='--', color='red', alpha=0.5)
     plt.legend()
+    print(np.mean(a) - np.mean(e[1:]))
     plt.show()
 
 def trending_rand_ints():
@@ -36,6 +38,7 @@ def trending_rand_ints():
     plt.axhline(np.mean(a), label='actual mean', linestyle='--', color='blue', alpha=0.5)
     plt.axhline(np.mean(e), label='mean of estimates', linestyle='--', color='red', alpha=0.5)
     plt.legend()
+    print(np.mean(a) - np.mean(e[1:]))
     plt.show()
 
 def var_rand_ints():
@@ -48,6 +51,7 @@ def var_rand_ints():
     plt.axhline(np.mean(a), label='actual mean', linestyle='--', color='blue', alpha=0.5)
     plt.axhline(np.mean(e), label='mean of estimates', linestyle='--', color='red', alpha=0.5)
     plt.legend()
+    print(np.mean(a) - np.mean(e[1:]))
     plt.show()
 
 def anomaly_rand_ints():
@@ -60,4 +64,5 @@ def anomaly_rand_ints():
     plt.axhline(np.mean(a), label='actual mean', linestyle='--', color='blue', alpha=0.5)
     plt.axhline(np.mean(e), label='mean of estimates', linestyle='--', color='red', alpha=0.5)
     plt.legend()
+    print(np.mean(a) - np.mean(e[1:]))
     plt.show()
