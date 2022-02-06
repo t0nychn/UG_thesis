@@ -1,4 +1,4 @@
-"""Sets up environment & provides API shorthand for functions"""
+"""Sets up environment & provides API shorthand for functions. Packaged into classes in utils.models"""
 import sys
 import numpy as np
 import pandas as pd
@@ -6,7 +6,6 @@ import statsmodels
 import statsmodels.api as sm
 import matplotlib
 import matplotlib.pyplot as plt
-
 
 # general
 def env():
@@ -60,6 +59,7 @@ def calc_shock(col, df, method='mad-12', clean=True, standardize=True, seasonal=
 
 # data visualization
 def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cumulative=False, figsize=(6.4,4.8), labels=None, colors=None, alpha=0.1):
+    """Exploratory use only"""
     plt.figure(figsize=figsize)
     for i in range(len(models)):
         model = models[i]
@@ -91,6 +91,7 @@ def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cum
     plt.axhline(y=0, color='grey', linestyle='--')
     if legend:
         plt.legend()
+    plt.show()
 
 
 # regressions
@@ -120,6 +121,8 @@ def ardl(y_col, x_col, df, lags=[1, 6]):
     df_copy = df_copy.dropna()
     return sm.OLS(df_copy[y_col], sm.add_constant(df_copy[x_cols])).fit()
 
+
+# obsolete exploratory functions
 def time_shift(y_col, x_col, df, start_yr=2000, end_yr=2018, direction='r', model=dl, periods=12, start=1):
     """See Exploratory4"""
     coeffs_f = {i: [] for i in range(periods+1)}
