@@ -81,7 +81,7 @@ class KF:
             coeffs = np.cumsum(DL(y_col, x_col, df.iloc[:min(15+i, len(df))], lags=self.lags).model.params[1:])
             for j in range(self.lags+1):
                 betas[j].append(coeffs[j])
-        b_df = pd.DataFrame(betas)
+        b_df = pd.DataFrame(betas, index=[min(df.index) + pd.DateOffset(months=i) for i in range(len(df))])
         for i in range(self.lags+1):
             phi = AutoReg(list(b_df[i]), 1).fit().params[1:]
             self.phis.append(phi)
