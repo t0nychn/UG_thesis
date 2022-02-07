@@ -1,4 +1,5 @@
 from . import *
+from statsmodels.tsa.ar_model import AutoReg
 
 class DL:
     def __init__(self, y_col, x_col, df, lags=12):
@@ -9,11 +10,11 @@ class DL:
         return self.model.summary()
     
     def plot(self, figsize=(6.4,4.8)):
-        params = self.model.params[1:]
+        coeffs = self.model.params[1:]
         bse = self.model.bse[1:]
         plt.figure(figsize=figsize)
-        plt.plot(np.cumsum(params))
-        bands = pd.DataFrame({0: [params[x] - bse[x] for x in range(len(params))], 1: [params[x] + bse[x] for x in range(len(params))]})
+        plt.plot(np.cumsum(coeffs))
+        bands = pd.DataFrame({0: [coeffs[x] - bse[x] for x in range(len(coeffs))], 1: [bse[x] + bse[x] for x in range(len(coeffs))]})
         plt.fill_between([*range(self.lags+1)], np.cumsum(bands[0]), np.cumsum(bands[1]), alpha=0.1)
         plt.axhline(y=0, color='grey', linestyle='--')
         plt.show()
@@ -67,3 +68,22 @@ class ARDL:
         plt.fill_between([*range(self.lags[0] + self.lags[1] + 1)], bands[0], bands[1], alpha=0.1)
         plt.axhline(y=0, color='grey', linestyle='--')
         plt.show()
+
+
+class KF:
+    def __init__(self, lags=12):
+        self.lags = lags
+    
+    def run(self, y_col, x_col, df):
+        betas = {i: [] for i in range(self.lags+1)}
+        self.phis = []
+        for i in range(len(df)):
+            coeffs = np.cumsum(DL(y_col, x_col, df.iloc[:min(15+i, len(df))], lags=self.lags).model.params[1:])
+            for j in range(self.lags+1):
+                betas[j].append(coeffs[j])
+        b_df = pd.DataFrame(betas)
+        for i in range(self.lags+1):
+            phi = AutoReg(list(b_df[i]), 1).fit().params[1:]
+            self.phis.append(phi)
+            b_df[i] = b_df[i] * phi
+        return b_df
