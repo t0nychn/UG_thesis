@@ -71,19 +71,18 @@ class ARDL:
 
 
 class KF:
-    def __init__(self, lags=12):
+    def __init__(self, window=48, lags=12):
         self.lags = lags
+        self.window = window # number of months for measurement sample
     
     def run(self, y_col, x_col, df):
         betas = {i: [] for i in range(self.lags+1)}
-        self.phis = []
-        for i in range(len(df)):
-            coeffs = np.cumsum(DL(y_col, x_col, df.iloc[:min(15+i, len(df))], lags=self.lags).model.params[1:])
+        for i in range(len(df)-self.window):
+            coeffs = DL(y_col, x_col, df.iloc[i:self.window+i], lags=self.lags).model.params[1:]
             for j in range(self.lags+1):
                 betas[j].append(coeffs[j])
-        b_df = pd.DataFrame(betas, index=[min(df.index) + pd.DateOffset(months=i) for i in range(len(df))])
+        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
         for i in range(self.lags+1):
-            phi = AutoReg(list(b_df[i]), 1).fit().params[1:]
-            self.phis.append(phi)
+            phi = AutoReg(np.array(b_df[i]), 1, trend='n').fit().params[-1]
             b_df[i] = b_df[i] * phi
         return b_df
