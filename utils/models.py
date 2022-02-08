@@ -1,6 +1,6 @@
 from . import *
 from statsmodels.tsa.ar_model import AutoReg
-from scipy.stats import norm
+from scipy.stats import t
 
 class DL:
     def __init__(self, y_col, x_col, df, lags=12):
@@ -75,37 +75,37 @@ class KF:
     def __init__(self, window=36, lags=12, conf_int=0):
         """conf_int > 0 returns confidence intervals cumulated till last lag"""
         self.lags = lags
-        self.window = window + 1 # number of months for measurement sample (+1 for indexing)
+        self.window = window # number of months for measurement sample (+1 for indexing)
         self.conf_int = conf_int
     
     def run(self, y_col, x_col, df):
         betas = {i: [] for i in range(self.lags+1)}
         errors = []
-        confs = {}
-        for i in range(len(df)-self.window):
-            model = DL(y_col, x_col, df.iloc[i:self.window+i], lags=self.lags).model
+        for i in range(len(df)-self.window-1):
+            model = DL(y_col, x_col, df.iloc[i:self.window+i+1], lags=self.lags).model
             coeffs = model.params[1:]
             errors.append(np.sum(model.bse[1:]))
             for j in range(self.lags+1):
                 betas[j].append(coeffs[j])
-        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
+        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df))))
         for i in range(self.lags+1):
             phi = AutoReg(np.array(b_df[i]), 1, trend='n').fit().params[-1]
             b_df[i] = b_df[i] * phi
         if self.conf_int > 0:
-            confs['lower'] = b_df.sum(axis=1) - np.array(errors) * norm.ppf(1-self.conf_int/2) # remember 2-tail test
-            confs['upper'] = b_df.sum(axis=1) + np.array(errors) * norm.ppf(1-self.conf_int/2)
-            return b_df.cumsum(axis=1), pd.DataFrame(errors, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
+            confs = {}
+            confs['lower'] = b_df.sum(axis=1) - np.array(errors) * t.ppf(1-self.conf_int/2, self.window-2*self.lags-2) # remember 2-tail test, df taken from downloaded chapter
+            confs['upper'] = b_df.sum(axis=1) + np.array(errors) * t.ppf(1-self.conf_int/2, self.window-2*self.lags-2)
+            return b_df.cumsum(axis=1), pd.DataFrame(confs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df))))
         else:
             return b_df.cumsum(axis=1)
     
     def run_ardl(self, y_col, x_col, df):
         betas = {i: [] for i in range(self.lags+1)}
-        for i in range(len(df)-self.window):
+        for i in range(len(df)-self.window-1):
             coeffs = ARDL(y_col, x_col, df.iloc[i:self.window+i]).simulate_response()
             for j in range(self.lags+1):
                 betas[j].append(coeffs[j])
-        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
+        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df))))
         for i in range(self.lags+1):
             phi = AutoReg(np.array(b_df[i]), 1, trend='n').fit().params[-1]
             b_df[i] = b_df[i] * phi
