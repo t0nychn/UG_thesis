@@ -106,7 +106,7 @@ def dl(y_col, x_col, df, lags=12):
     df_copy = df_copy.dropna()
     return sm.OLS(df_copy[y_col], sm.add_constant(df_copy[x_cols])).fit()
 
-def ardl(y_col, x_col, df, lags=[1, 6]):
+def ardl(y_col, x_col, df, lags=[1, 11]):
     """Regresses y against lagged values of itself and x"""
     df_copy = df.copy(deep=True)
     x_cols = []

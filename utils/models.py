@@ -71,14 +71,26 @@ class ARDL:
 
 
 class KF:
-    def __init__(self, window=48, lags=12):
+    def __init__(self, window=36, lags=12):
         self.lags = lags
-        self.window = window # number of months for measurement sample
+        self.window = window + 1 # number of months for measurement sample (+1 for indexing)
     
     def run(self, y_col, x_col, df):
         betas = {i: [] for i in range(self.lags+1)}
         for i in range(len(df)-self.window):
             coeffs = DL(y_col, x_col, df.iloc[i:self.window+i], lags=self.lags).model.params[1:]
+            for j in range(self.lags+1):
+                betas[j].append(coeffs[j])
+        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
+        for i in range(self.lags+1):
+            phi = AutoReg(np.array(b_df[i]), 1, trend='n').fit().params[-1]
+            b_df[i] = b_df[i] * phi
+        return b_df.cumsum(axis=1)
+    
+    def run_ardl(self, y_col, x_col, df):
+        betas = {i: [] for i in range(self.lags+1)}
+        for i in range(len(df)-self.window):
+            coeffs = ARDL(y_col, x_col, df.iloc[i:self.window+i]).simulate_response()
             for j in range(self.lags+1):
                 betas[j].append(coeffs[j])
         b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
