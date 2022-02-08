@@ -6,6 +6,7 @@ import statsmodels
 import statsmodels.api as sm
 import matplotlib
 import matplotlib.pyplot as plt
+import scipy
 
 # general
 def env():
@@ -14,6 +15,7 @@ def env():
     print(f'numpy: {np.__version__}')
     print(f'pandas: {pd.__version__}')
     print(f'matplotlib: {matplotlib.__version__}')
+    print(f'scipy: {scipy.__version__}')
     print(f'statsmodels: {statsmodels.__version__}')
 
 
