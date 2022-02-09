@@ -15,7 +15,7 @@ class DL:
         bse = self.model.bse[1:]
         plt.figure(figsize=figsize)
         plt.plot(np.cumsum(coeffs))
-        bands = pd.DataFrame({0: [coeffs[x] - bse[x] for x in range(len(coeffs))], 1: [bse[x] + bse[x] for x in range(len(coeffs))]})
+        bands = pd.DataFrame({0: [coeffs[x] - bse[x] for x in range(len(coeffs))], 1: [coeffs[x] + bse[x] for x in range(len(coeffs))]})
         plt.fill_between([*range(self.lags+1)], np.cumsum(bands[0]), np.cumsum(bands[1]), alpha=0.1)
         plt.axhline(y=0, color='grey', linestyle='--')
         plt.show()
@@ -75,7 +75,7 @@ class KF:
     def __init__(self, window=36, lags=12, conf_int=0):
         """conf_int > 0 returns confidence intervals cumulated till last lag"""
         self.lags = lags
-        self.window = window # number of months for measurement sample (+1 for indexing)
+        self.window = window # number of months for measurement sample = window - lags (24 in this case)
         self.conf_int = conf_int
     
     def run(self, y_col, x_col, df):
