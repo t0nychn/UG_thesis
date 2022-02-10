@@ -73,7 +73,7 @@ class ARDL:
 
 class KF:
     def __init__(self, window=36, lags=12, conf_int=0):
-        """conf_int > 0 returns confidence intervals cumulated till last lag"""
+        """conf_int > 0 returns confidence intervals cumulated to last lag"""
         self.lags = lags
         self.window = window # number of months for measurement sample = window - lags (24 in this case)
         self.conf_int = conf_int
@@ -81,32 +81,47 @@ class KF:
     def run(self, y_col, x_col, df):
         betas = {i: [] for i in range(self.lags+1)}
         errors = []
-        for i in range(len(df)-self.window-1):
+        self.df = df # save these for backtesting
+        self.const = [] # constants for backtest
+        self.y_col = y_col
+        self.x_col = x_col
+        for i in range(len(df)-self.window):
             model = DL(y_col, x_col, df.iloc[i:self.window+i+1], lags=self.lags).model
             coeffs = model.params[1:]
+            self.const.append(model.params[0])
             errors.append(np.sum(model.bse[1:]))
             for j in range(self.lags+1):
                 betas[j].append(coeffs[j])
-        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df))))
+        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
         for i in range(self.lags+1):
             phi = AutoReg(np.array(b_df[i]), 1, trend='n').fit().params[-1]
             b_df[i] = b_df[i] * phi
+        self.b_df = b_df # save unsummed betas for backtesting
         if self.conf_int > 0:
             confs = {}
             confs['lower'] = b_df.sum(axis=1) - np.array(errors) * t.ppf(1-self.conf_int/2, self.window-2*self.lags-2) # remember 2-tail test, df taken from downloaded chapter
             confs['upper'] = b_df.sum(axis=1) + np.array(errors) * t.ppf(1-self.conf_int/2, self.window-2*self.lags-2)
-            return b_df.cumsum(axis=1), pd.DataFrame(confs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df))))
+            return b_df.cumsum(axis=1), pd.DataFrame(confs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
         else:
             return b_df.cumsum(axis=1)
     
     def run_ardl(self, y_col, x_col, df):
+        """Does not have conf_int or backtesting functionalities - purely for comparison of responses"""
         betas = {i: [] for i in range(self.lags+1)}
-        for i in range(len(df)-self.window-1):
+        for i in range(len(df)-self.window):
             coeffs = ARDL(y_col, x_col, df.iloc[i:self.window+i]).simulate_response()
             for j in range(self.lags+1):
                 betas[j].append(coeffs[j])
-        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df))))
+        b_df = pd.DataFrame(betas, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.window+1, len(df)+1)))
         for i in range(self.lags+1):
             phi = AutoReg(np.array(b_df[i]), 1, trend='n').fit().params[-1]
             b_df[i] = b_df[i] * phi
         return b_df
+    
+    def backtest(self):
+        """Returns RMSE of predictions"""
+        backtest = self.df.copy(deep=True).shift(1) # remmeber the beta values are indexed as beta predictions for t+1, so need to use x at t to get predictive quality
+        backtest['res'] = np.array(self.const) + backtest.loc[min(self.b_df.index)][self.x_col] * self.b_df[0]
+        for i in range(1, self.lags+1):
+            backtest['res'] += self.b_df[i] * backtest[self.x_col].shift(i)
+        return backtest.dropna()['res']
