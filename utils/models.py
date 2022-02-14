@@ -119,7 +119,7 @@ class KF:
         return b_df
     
     def backtest(self):
-        """Returns RMSE of predictions"""
+        """Returns predicted dependent variables"""
         backtest = self.df.copy(deep=True).shift(1) # remmeber the beta values are indexed as beta predictions for t+1, so need to use x at t to get predictive quality
         backtest['res'] = np.array(self.const) + backtest.loc[min(self.b_df.index)][self.x_col] * self.b_df[0]
         for i in range(1, self.lags+1):
