@@ -32,8 +32,8 @@ def clean_series(col, df, standardize=True, seasonal=True):
     Returns input column as new DataFrame."""
     if standardize:
         series = df.copy(deep=True)[col]
-        vol = series.std()
-        series = series/vol
+        ann_vol = series.index.map(lambda x: series.groupby(series.index.year).std().loc[x.year])
+        series = series/ann_vol
     if seasonal:
         mth_avg = series.index.map(lambda x: series.groupby(series.index.month).mean().loc[x.month])
         series = series - mth_avg
