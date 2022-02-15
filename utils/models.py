@@ -1,5 +1,6 @@
 from . import *
 from filterpy.kalman import KalmanFilter
+from statsmodels.tsa.filters.hp_filter import hpfilter
 
 class DL:
     def __init__(self, y_col, x_col, df, lags=12, const=False):
@@ -129,6 +130,23 @@ def plot_backtests(y, x_label, res_dict, rmse=True, start=0):
         ax[i].plot(y.loc[start:max(y.index)], label='actual', alpha=0.8)
         ax[i].set_title(f'{k}')
         ax[i].legend()
-        i += 1
         if rmse:
-            print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna()** 2) / len(res_dict[k]))}')
+            if i == 0:
+                print(f'RMSE Random Walk: {np.sqrt(np.sum((y - 0).dropna() ** 2) / len(y))}')
+            print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
+        i += 1
+
+def hp_kalman_plot(df, cycle=False, figsize=(20,7), title=False, linewidth=1.5, splitline=True):
+    df.plot(figsize=figsize, label='Kalman estimates', linewidth=linewidth)
+    c, t = hpfilter(df.iloc[:,-1], lamb=129600)
+    t.plot(label='HP trend', color='b', alpha=0.8, linewidth=linewidth)
+    plt.fill_between(t.index, [0 for _ in t.index], t, alpha=0.5)
+    if cycle:
+        c.plot(label='HP cycle')
+    plt.legend()
+    plt.axhline(0, linestyle='--', color='grey', linewidth=linewidth)
+    if splitline:
+        plt.axvline('2000-01-01', color='grey', linewidth=linewidth)
+    if title:
+        plt.title(title)
+    plt.plot()
