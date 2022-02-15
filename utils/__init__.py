@@ -7,6 +7,7 @@ import statsmodels.api as sm
 import matplotlib
 import matplotlib.pyplot as plt
 import scipy
+import filterpy
 
 # general
 def env():
@@ -17,6 +18,7 @@ def env():
     print(f'matplotlib: {matplotlib.__version__}')
     print(f'scipy: {scipy.__version__}')
     print(f'statsmodels: {statsmodels.__version__}')
+    print(f'filterpy: {filterpy.__version__}')
 
 
 # data manipulation

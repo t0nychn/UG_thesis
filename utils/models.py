@@ -76,8 +76,8 @@ class KF:
         kf = KalmanFilter(dim_x=lags+2, dim_z=lags+2)
         kf.x = x0
         kf.Q = Q
-        kf.P = np.diag([1] + [p for i in range(self.lags+1)])
-        kf.R = np.diag([1] + [r for i in range(self.lags+1)])
+        kf.P = np.diag([.5] + [p for i in range(self.lags+1)])
+        kf.R = np.diag([.5] + [r for i in range(self.lags+1)])
         kf.F = np.array([[1 for _ in range(self.lags+2)] for _ in range(self.lags+2)])
         self.kf = kf
         self.xs = {i: [] for i in range(self.lags+2)}
@@ -103,3 +103,24 @@ class KF:
         backtest = self.df.copy(deep=True).shift(self.lags)
         backtest['res'] = self.b_df[0] + np.sum(self.b_df[i+1] * backtest[f'{self.x_col}'].shift(i) for i in range(self.lags+1))
         return backtest.dropna()['res']
+
+def ols_backtest(x, model, lags=0):
+    backtest = model.params[0] + x * model.params[1]
+    for i in range(2, lags+2): # remember params contain constant at [0]
+        backtest += x.shift(i-1) * model.params[i]
+    return backtest
+
+def plot_backtests(y, x_label, res_dict, rmse=True, start=0):
+    if start == 0:
+        start = min(y.index)
+    fig, ax = plt.subplots(len(res_dict), sharex=True, figsize=(20,8))
+    fig.suptitle(f'Backtesting Results for {x_label}')
+    i = 0
+    for k in res_dict.keys():
+        ax[i].plot(res_dict[k].loc[start:max(y.index)], label=f'{k}', alpha=0.8)
+        ax[i].plot(y.loc[start:max(y.index)], label='actual', alpha=0.8)
+        ax[i].set_title(f'{k}')
+        ax[i].legend()
+        i += 1
+        if rmse:
+            print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna()** 2) / len(res_dict[k]))}')
