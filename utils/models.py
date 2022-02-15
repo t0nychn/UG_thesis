@@ -2,8 +2,8 @@ from . import *
 from filterpy.kalman import KalmanFilter
 
 class DL:
-    def __init__(self, y_col, x_col, df, lags=12):
-        self.model = dl(y_col, x_col, df, lags=lags).get_robustcov_results(cov_type='HAC', maxlags=1) # HAC due to resids being AR(1)
+    def __init__(self, y_col, x_col, df, lags=12, const=False):
+        self.model = dl(y_col, x_col, df, lags=lags, const=const).get_robustcov_results(cov_type='HAC', maxlags=1) # HAC due to resids being AR(1)
         self.lags = lags
     
     def summary(self):
@@ -71,42 +71,50 @@ class ARDL:
 
 
 class KF:
-    def __init__(self, x0, p=100, r=10, Q=100, lags=0):
+    def __init__(self, x0, p=0, r=0, Q=0, lags=0):
         self.lags = lags
-        kf = KalmanFilter(dim_x=lags+2, dim_z=lags+2)
+        kf = KalmanFilter(dim_x=lags+1, dim_z=lags+1)
         kf.x = x0
-        kf.Q = Q
-        kf.P = np.diag([.5] + [p for i in range(self.lags+1)])
-        kf.R = np.diag([.5] + [r for i in range(self.lags+1)])
-        kf.F = np.array([[1 for _ in range(self.lags+2)] for _ in range(self.lags+2)])
+        kf.F = np.array([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)])
         self.kf = kf
-        self.xs = {i: [] for i in range(self.lags+2)}
+        self.xs = {i: [] for i in range(self.lags+1)}
+        self.p = p
+        self.r = r
+        self.Q = Q
     
     def run(self, y_col, x_col, df):   
         df = df.dropna()
-        for i in range(self.lags+2, len(df)):
+        if self.p == 0:
+            self.p = df[f'{x_col}'].var()
+        if self.r == 0:
+            self.r = df[f'{x_col}'].var()
+        if self.Q == 0:
+            self.kf.Q = df[f'{y_col}'].var()
+        self.kf.P = np.diag([self.p for i in range(self.lags+1)])
+        self.kf.R = np.diag([self.r for i in range(self.lags+1)])
+        for i in range(self.lags+1, len(df)):
             self.kf.predict()
-            self.kf.H = np.array([[1] + [df.shift(l).iloc[i-j][f'{x_col}'] for l in range(self.lags+1)]
-                                 for j in range(self.lags+2)]) # update H with fresh values
-            self.kf.update(np.array([df.iloc[i-l][f'{y_col}'] for l in range(self.lags+2)]))
-            for j in range(self.lags+2):
+            self.kf.H = np.array([[df.shift(l).iloc[i-j][f'{x_col}'] for l in range(self.lags+1)]
+                                 for j in range(self.lags+1)]) # update H with fresh values
+            self.kf.update(np.array([df.iloc[i-l][f'{y_col}'] for l in range(self.lags+1)]))
+            for j in range(self.lags+1):
                 self.xs[j].append(self.kf.x[j])
 
         # save for backtesting
         self.x_col = x_col
         self.df = df
-        self.b_df = pd.DataFrame(self.xs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+2, len(df))))
-        return self.b_df[[i for i in range(self.lags+1)]].cumsum(axis=1)
+        self.b_df = pd.DataFrame(self.xs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+1, len(df))))
+        return self.b_df.cumsum(axis=1)
     
     def backtest(self):
         """Returns predicted dependent variables"""
-        backtest = self.df.copy(deep=True).shift(self.lags)
-        backtest['res'] = self.b_df[0] + np.sum(self.b_df[i+1] * backtest[f'{self.x_col}'].shift(i) for i in range(self.lags+1))
+        backtest = self.df.copy(deep=True)
+        backtest['res'] = np.sum(self.b_df[i] * backtest[f'{self.x_col}'].shift(i) for i in range(self.lags+1))
         return backtest.dropna()['res']
 
 def ols_backtest(x, model, lags=0):
-    backtest = model.params[0] + x * model.params[1]
-    for i in range(2, lags+2): # remember params contain constant at [0]
+    backtest = x * model.params[0]
+    for i in range(1, lags+1): # remember params contain constant at [0]
         backtest += x.shift(i-1) * model.params[i]
     return backtest
 

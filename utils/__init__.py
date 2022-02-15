@@ -99,7 +99,7 @@ def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cum
 
 
 # regressions
-def dl(y_col, x_col, df, lags=12):
+def dl(y_col, x_col, df, lags=12, const=True):
     """Regresses y against lagged values of x"""
     df_copy = df.copy(deep=True)
     x_cols = []
@@ -108,7 +108,10 @@ def dl(y_col, x_col, df, lags=12):
         df_copy[new_col] = df_copy[f'{x_col}'].shift(i)
         x_cols.append(new_col)
     df_copy = df_copy.dropna()
-    return sm.OLS(df_copy[y_col], sm.add_constant(df_copy[x_cols])).fit()
+    if const:
+        return sm.OLS(df_copy[y_col], sm.add_constant(df_copy[x_cols])).fit()
+    else:
+        return sm.OLS(df_copy[y_col], df_copy[x_cols]).fit()
 
 def ardl(y_col, x_col, df, lags=[1, 11]):
     """Regresses y against lagged values of itself and x"""
