@@ -1,0 +1,12 @@
+ECB indices: ECB
+EPU: author website
+GPR: author website
+GSCI: hopefully Bloomberg - currently investing.com
+MSCI World: investing.com
+Natural gas: EIA
+REA: Dallas Fed
+S&P 500: Nasdaq Data Link
+US crude production: OECD
+VIX: Yahoo Finance
+VXO: Yahoo Finance
+WTI: EIA
