@@ -1,8 +1,8 @@
 ECB indices: ECB
 EPU: author website
 GPR: author website
-GSCI: hopefully Bloomberg - currently investing.com
-MSCI World: investing.com
+GSCI indices: Bloomberg
+MSCI indices: Bloomberg
 Natural gas: EIA
 REA: Dallas Fed
 S&P 500: Nasdaq Data Link

@@ -136,17 +136,26 @@ def plot_backtests(y, x_label, res_dict, rmse=True, start=0):
             print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
         i += 1
 
-def hp_kalman_plot(df, cycle=False, figsize=(20,7), title=False, linewidth=1.5, splitline=True):
+def hp_kalman_plot(df, cycle=False, figsize=(20,7), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
     df.plot(figsize=figsize, label='Kalman estimates', linewidth=linewidth)
     c, t = hpfilter(df.iloc[:,-1], lamb=129600)
     t.plot(label='HP trend', color='b', alpha=0.8, linewidth=linewidth)
     plt.fill_between(t.index, [0 for _ in t.index], t, alpha=0.5)
     if cycle:
         c.plot(label='HP cycle')
-    plt.legend()
     plt.axhline(0, linestyle='--', color='grey', linewidth=linewidth)
     if splitline:
-        plt.axvline('2000-01-01', color='grey', linewidth=linewidth)
+        plt.axvline('2000-01-01', linestyle='--', color='black', linewidth=linewidth)
     if title:
         plt.title(title)
+    if recessions:
+        r = pd.read_csv('data/recessions.csv')
+        for index, row in r.iterrows():
+            plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
+    if geopolitics:
+        g = pd.read_csv('data/GPR_events.csv')
+        for index, row in g.iterrows():
+            plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), alpha=0.2, color=row['colour'], label=row['name'])
+    if legend:
+        plt.legend()
     plt.plot()
