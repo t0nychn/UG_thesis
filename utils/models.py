@@ -72,34 +72,36 @@ class ARDL:
 
 
 class KF:
-    def __init__(self, x0, p=0, r=0, Q=0, lags=0):
+    def __init__(self, x0=0, p=0, r=0, Q=0, lags=0):
         self.lags = lags
-        kf = KalmanFilter(dim_x=lags+1, dim_z=lags+1)
-        kf.x = x0
-        kf.F = np.array([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)])
-        self.kf = kf
-        self.xs = {i: [] for i in range(self.lags+1)}
         self.p = p
         self.r = r
         self.Q = Q
+        self.x0 = x0
     
-    def run(self, y_col, x_col, df):   
+    def run(self, y_col, x_col, df):
+        self.xs = {i: [] for i in range(self.lags+1)}
+        kf = KalmanFilter(dim_x=self.lags+1, dim_z=self.lags+1)
+        if self.x0 == 0:
+            kf.x = np.array([1 for _ in range(self.lags+1)])
+        kf.F = np.array([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)]) 
+        
         df = df.dropna()
         if self.p == 0:
             self.p = df[f'{x_col}'].var()
         if self.r == 0:
             self.r = df[f'{x_col}'].var()
         if self.Q == 0:
-            self.kf.Q = df[f'{y_col}'].var()
-        self.kf.P = np.diag([self.p for i in range(self.lags+1)])
-        self.kf.R = np.diag([self.r for i in range(self.lags+1)])
+            kf.Q = df[f'{x_col}'].var()
+        kf.P = np.diag([self.p for i in range(self.lags+1)])
+        kf.R = np.diag([self.r for i in range(self.lags+1)])
         for i in range(self.lags+1, len(df)):
-            self.kf.predict()
-            self.kf.H = np.array([[df.shift(l).iloc[i-j][f'{x_col}'] for l in range(self.lags+1)]
+            kf.predict()
+            kf.H = np.array([[df.shift(l).iloc[i-j][f'{x_col}'] for l in range(self.lags+1)]
                                  for j in range(self.lags+1)]) # update H with fresh values
-            self.kf.update(np.array([df.iloc[i-l][f'{y_col}'] for l in range(self.lags+1)]))
+            kf.update(np.array([df.iloc[i-l][f'{y_col}'] for l in range(self.lags+1)]))
             for j in range(self.lags+1):
-                self.xs[j].append(self.kf.x[j])
+                self.xs[j].append(kf.x[j])
 
         # save for backtesting
         self.x_col = x_col
@@ -119,10 +121,11 @@ def ols_backtest(x, model, lags=0):
         backtest += x.shift(i-1) * model.params[i]
     return backtest
 
-def plot_backtests(y, x_label, res_dict, rmse=True, start=0):
+def plot_backtests(y, x_label, res_dict, rmse=True, start=0, figsize=(20,8), plot=False):
+    """Better version is below. This function maintained for backwards compatibility"""
     if start == 0:
         start = min(y.index)
-    fig, ax = plt.subplots(len(res_dict), sharex=True, figsize=(20,8))
+    fig, ax = plt.subplots(len(res_dict), sharex=True, figsize=figsize)
     fig.suptitle(f'Backtesting Results for {x_label}')
     i = 0
     for k in res_dict.keys():
@@ -136,12 +139,33 @@ def plot_backtests(y, x_label, res_dict, rmse=True, start=0):
             print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
         i += 1
 
-def hp_kalman_plot(df, cycle=False, figsize=(20,7), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
+def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(20,8), plot=False):
+    if start == 0:
+        start = min(y.index)
+    if plot:
+        fig, ax = plt.subplots(len(res_dict), sharex=True, figsize=figsize)
+    i = 0
+    for k in res_dict.keys():
+        if x_label:
+            fig.suptitle(f'Backtesting Results for {x_label}')
+        if plot:
+            ax[i].plot(res_dict[k].loc[start:max(y.index)], label=f'{k}', alpha=0.8)
+            ax[i].plot(y.loc[start:max(y.index)], label='actual', alpha=0.8)
+            ax[i].set_title(f'{k}')
+            ax[i].legend()
+        if rmse:
+            if i == 0:
+                print(f'RMSE Random Walk: {np.sqrt(np.sum((y - 0).dropna() ** 2) / len(y))}')
+            print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
+        i += 1
+
+def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, figsize=(20,7), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
     df.plot(figsize=figsize, label='Kalman estimates', linewidth=linewidth)
     c, t = hpfilter(df.iloc[:,-1], lamb=129600)
-    t.plot(label='HP trend', color='b', alpha=0.8, linewidth=linewidth)
-    plt.fill_between(t.index, [0 for _ in t.index], t, alpha=0.5)
-    if cycle:
+    if hp_trend:
+        t.plot(label='HP trend', color='b', alpha=0.8, linewidth=linewidth)
+        plt.fill_between(t.index, [0 for _ in t.index], t, alpha=0.5)
+    if hp_cycle:
         c.plot(label='HP cycle')
     plt.axhline(0, linestyle='--', color='grey', linewidth=linewidth)
     if splitline:
@@ -155,7 +179,10 @@ def hp_kalman_plot(df, cycle=False, figsize=(20,7), title=False, linewidth=1.5, 
     if geopolitics:
         g = pd.read_csv('data/GPR_events.csv')
         for index, row in g.iterrows():
-            plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), alpha=0.2, color=row['colour'], label=row['name'])
+            plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), alpha=0.15, color=row['colour'], label=row['name'])
     if legend:
-        plt.legend()
+        if geopolitics:
+            plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3, fancybox=True, shadow=True)
+        else:
+            plt.legend()
     plt.plot()

@@ -1,9 +1,8 @@
 ﻿start,end,name,colour
-01/11/1988,01/01/1992,Collapse of Soviet Union,green
-01/08/1990,01/03/1991,Gulf War,orange
-01/09/2000,01/10/2000,9/11 Attacks,cyan
-01/04/2003,01/01/2012,Iraq War,red
-01/12/2010,01/01/2013,Arab Spring (incl. start of Syrian Civil War),purple
-01/06/2016,01/12/2016,Brexit & Trump election,magenta
-01/01/2018,01/12/2021,China-US Trade War,blue
-01/03/2020,01/12/2021,Covid-19 Pandemic,brown
+01/11/1988,01/01/1992,Collapse of USSR ,magenta
+01/08/1990,01/03/1991,Gulf War,red
+01/09/2000,01/10/2000,9/11 Attacks,brown
+01/04/2003,01/01/2012,Iraq War,blue
+01/12/2010,01/01/2013,Arab Spring,purple
+01/06/2016,01/12/2016,Brexit & Trump election,green
+01/03/2021,01/12/2021,Russo-Ukranian Crisis,orange
