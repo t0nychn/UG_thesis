@@ -79,7 +79,13 @@ class KF:
         self.Q = Q
         self.x0 = x0
     
-    def run(self, y_col, x_col, df):
+    def run(self, y_col, x_col, df, show_scatter=False):
+        if show_scatter:
+            plt.scatter(df[x_col], df[y_col])
+            plt.title('Input Data')
+            plt.ylabel(y_col)
+            plt.xlabel(x_col)
+            plt.show()
         self.xs = {i: [] for i in range(self.lags+1)}
         kf = KalmanFilter(dim_x=self.lags+1, dim_z=self.lags+1)
         if self.x0 == 0:
@@ -88,11 +94,11 @@ class KF:
         
         df = df.dropna()
         if self.p == 0:
-            self.p = df[f'{x_col}'].var()
+            self.p = df[x_col].var()
         if self.r == 0:
-            self.r = df[f'{x_col}'].var()
+            self.r = df[x_col].var()
         if self.Q == 0:
-            kf.Q = df[f'{x_col}'].var()
+            kf.Q = df[x_col].var()
         kf.P = np.diag([self.p for i in range(self.lags+1)])
         kf.R = np.diag([self.r for i in range(self.lags+1)])
         for i in range(self.lags+1, len(df)):
@@ -121,7 +127,7 @@ def ols_backtest(x, model, lags=0):
         backtest += x.shift(i-1) * model.params[i]
     return backtest
 
-def plot_backtests(y, x_label, res_dict, rmse=True, start=0, figsize=(20,8), plot=False):
+def plot_backtests(y, x_label, res_dict, rmse=True, start=0, figsize=(17,8), plot=False):
     """Better version is below. This function maintained for backwards compatibility"""
     if start == 0:
         start = min(y.index)
@@ -139,7 +145,7 @@ def plot_backtests(y, x_label, res_dict, rmse=True, start=0, figsize=(20,8), plo
             print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
         i += 1
 
-def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(20,8), plot=False):
+def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(17,8), plot=False):
     if start == 0:
         start = min(y.index)
     if plot:
@@ -159,7 +165,7 @@ def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(20,8), plo
             print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
         i += 1
 
-def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, figsize=(20,7), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
+def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, figsize=(17,7), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
     df.plot(figsize=figsize, label='Kalman estimates', linewidth=linewidth)
     c, t = hpfilter(df.iloc[:,-1], lamb=129600)
     if hp_trend:
