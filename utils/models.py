@@ -127,7 +127,7 @@ def ols_backtest(x, model, lags=0):
         backtest += x.shift(i-1) * model.params[i]
     return backtest
 
-def plot_backtests(y, x_label, res_dict, rmse=True, start=0, figsize=(17,8), plot=False):
+def plot_backtests(y, x_label, res_dict, rmse=True, start=0, figsize=(20,5), plot=False):
     """Better version is below. This function maintained for backwards compatibility"""
     if start == 0:
         start = min(y.index)
@@ -145,7 +145,7 @@ def plot_backtests(y, x_label, res_dict, rmse=True, start=0, figsize=(17,8), plo
             print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
         i += 1
 
-def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(17,8), plot=False):
+def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(20,5), plot=False):
     if start == 0:
         start = min(y.index)
     if plot:
@@ -165,7 +165,7 @@ def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(17,8), plo
             print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
         i += 1
 
-def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, figsize=(17,7), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
+def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, figsize=(20,5), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
     df.plot(figsize=figsize, label='Kalman estimates', linewidth=linewidth)
     c, t = hpfilter(df.iloc[:,-1], lamb=129600)
     if hp_trend:
@@ -188,7 +188,7 @@ def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, figsize=(17,7), title=Fals
             plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), alpha=0.15, color=row['colour'], label=row['name'])
     if legend:
         if geopolitics:
-            plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.25), ncol=3, fancybox=True, shadow=True)
+            plt.legend(loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=3, fancybox=True, shadow=True)
         else:
             plt.legend()
     plt.plot()
