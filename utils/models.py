@@ -121,6 +121,58 @@ class KF:
         backtest['res'] = np.sum(self.b_df[i] * backtest[f'{self.x_col}'].shift(i) for i in range(self.lags+1))
         return backtest.dropna()['res']
 
+
+class KFConst:
+    """Adds risk premia constant - doesn't work very well"""
+    def __init__(self, x0=0, p=0, r=0, Q=0, lags=0):
+        self.lags = lags
+        self.p = p
+        self.r = r
+        self.Q = Q
+        self.x0 = x0
+    
+    def run(self, y_col, x_col, df, show_scatter=False):
+        if show_scatter:
+            plt.scatter(df[x_col], df[y_col])
+            plt.title('Input Data')
+            plt.ylabel(y_col)
+            plt.xlabel(x_col)
+            plt.show()
+        self.xs = {i: [] for i in range(self.lags+2)}
+        kf = KalmanFilter(dim_x=self.lags+2, dim_z=self.lags+2)
+        if self.x0 == 0:
+            kf.x = np.array([0] + [1 for _ in range(self.lags+1)])
+        kf.F = np.array([[1 for _ in range(self.lags+2)] for _ in range(self.lags+2)]) 
+        
+        df = df.dropna()
+        if self.p == 0:
+            self.p = df[x_col].var()
+        if self.r == 0:
+            self.r = df[x_col].var()
+        if self.Q == 0:
+            kf.Q = df[x_col].var()
+        kf.P = np.diag([self.p for i in range(self.lags+2)])
+        kf.R = np.diag([self.r for i in range(self.lags+2)])
+        for i in range(self.lags+2, len(df)):
+            kf.predict()
+            kf.H = np.array([[1] + [df.shift(l).iloc[i-j][f'{x_col}'] for l in range(self.lags+1)]
+                                 for j in range(self.lags+2)]) # update H with fresh values
+            kf.update(np.array([df.iloc[i-l][f'{y_col}'] for l in range(self.lags+2)]))
+            for j in range(self.lags+2):
+                self.xs[j].append(kf.x[j])
+
+        # save for backtesting
+        self.x_col = x_col
+        self.df = df
+        self.b_df = pd.DataFrame(self.xs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+2, len(df))))
+        return self.b_df.cumsum(axis=1)
+    
+    def backtest(self):
+        """Returns predicted dependent variables"""
+        backtest = self.df.copy(deep=True)
+        backtest['res'] = self.b_df[0] + np.sum(self.b_df[i] * backtest[f'{self.x_col}'].shift(i) for i in range(1, self.lags+2))
+        return backtest.dropna()['res']
+
 def ols_backtest(x, model, lags=0):
     backtest = x * model.params[0]
     for i in range(1, lags+1): # remember params contain constant at [0]

@@ -6,7 +6,7 @@ MSCI indices: Bloomberg
 Natural gas: EIA
 REA: Dallas Fed
 S&P 500: Nasdaq Data Link
-US crude production: OECD
+Crude production: EIA World Petroleum (incl lease condensate)
 VIX: Yahoo Finance
 VXO: Yahoo Finance
 WTI: EIA
