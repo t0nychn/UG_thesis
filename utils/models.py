@@ -79,7 +79,7 @@ class KF:
         self.Q = Q
         self.x0 = x0
     
-    def run(self, y_col, x_col, df, show_scatter=False):
+    def run(self, y_col, x_col, df, show_scatter=False, conf=1.96):
         if show_scatter:
             plt.scatter(df[x_col], df[y_col])
             plt.title('Input Data')
@@ -87,6 +87,7 @@ class KF:
             plt.xlabel(x_col)
             plt.show()
         self.xs = {i: [] for i in range(self.lags+1)}
+        self.ps = {i: [] for i in range(self.lags+1)}
         kf = KalmanFilter(dim_x=self.lags+1, dim_z=self.lags+1)
         if self.x0 == 0:
             kf.x = np.array([1 for _ in range(self.lags+1)])
@@ -103,16 +104,19 @@ class KF:
         kf.R = np.diag([self.r for i in range(self.lags+1)])
         for i in range(self.lags+1, len(df)):
             kf.predict()
-            kf.H = np.array([[df.shift(l).iloc[i-j][f'{x_col}'] for l in range(self.lags+1)]
+            kf.H = np.array([[df.shift(l).iloc[i-j][x_col] for l in range(self.lags+1)]
                                  for j in range(self.lags+1)]) # update H with fresh values
-            kf.update(np.array([df.iloc[i-l][f'{y_col}'] for l in range(self.lags+1)]))
+            kf.update(np.array([df.iloc[i-l][y_col] for l in range(self.lags+1)]))
             for j in range(self.lags+1):
                 self.xs[j].append(kf.x[j])
+                self.ps[j].append(np.sqrt(kf.P.diagonal()[j]))           
 
         # save for backtesting
         self.x_col = x_col
         self.df = df
         self.b_df = pd.DataFrame(self.xs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+1, len(df))))
+        ps = pd.DataFrame(self.ps, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+1, len(df))))
+        self.c_df = pd.DataFrame({'lower': self.b_df.sum(axis=1) - conf * ps.sum(axis=1), 'upper': self.b_df.sum(axis=1) + conf * ps.sum(axis=1)}, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+1, len(df))))
         return self.b_df.cumsum(axis=1)
     
     def backtest(self):
@@ -120,6 +124,18 @@ class KF:
         backtest = self.df.copy(deep=True)
         backtest['res'] = np.sum(self.b_df[i] * backtest[f'{self.x_col}'].shift(i) for i in range(self.lags+1))
         return backtest.dropna()['res']
+    
+    def shade_confs(self, alpha=0.1):
+        plt.fill_between(self.c_df.index, self.c_df['lower'], self.c_df['upper'], alpha=alpha)
+    
+    def sig_counts(self, start=0, end=0):
+        if start == 0:
+            start = str(min(self.c_df.index).year)
+        if end == 0:
+            end = str(max(self.c_df.index).year)
+        sliced = self.c_df.loc[start:end]
+        print(f'Start:{start}, End: {end}')
+        print(f"Significant direction (+ve for upwards, -ve for downwards): {len(sliced[sliced['lower'] > 0])/len(sliced) - len(sliced[sliced['upper'] < 0])/len(sliced)}")
 
 
 class KFConst:
