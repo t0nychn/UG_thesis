@@ -1,6 +1,7 @@
 from . import *
 from filterpy.kalman import KalmanFilter
 from statsmodels.tsa.filters.hp_filter import hpfilter
+from statistics import NormalDist
 
 class DL:
     def __init__(self, y_col, x_col, df, lags=12, const=False):
@@ -79,7 +80,7 @@ class KF:
         self.Q = Q
         self.x0 = x0
     
-    def run(self, y_col, x_col, df, show_scatter=False, conf=1.96):
+    def run(self, y_col, x_col, df, show_scatter=False):
         if show_scatter:
             plt.scatter(df[x_col], df[y_col])
             plt.title('Input Data')
@@ -87,7 +88,7 @@ class KF:
             plt.xlabel(x_col)
             plt.show()
         self.xs = {i: [] for i in range(self.lags+1)}
-        self.ps = {i: [] for i in range(self.lags+1)}
+        ps = {i: [] for i in range(self.lags+1)}
         kf = KalmanFilter(dim_x=self.lags+1, dim_z=self.lags+1)
         if self.x0 == 0:
             kf.x = np.array([1 for _ in range(self.lags+1)])
@@ -109,14 +110,13 @@ class KF:
             kf.update(np.array([df.iloc[i-l][y_col] for l in range(self.lags+1)]))
             for j in range(self.lags+1):
                 self.xs[j].append(kf.x[j])
-                self.ps[j].append(np.sqrt(kf.P.diagonal()[j]))           
+                ps[j].append(np.sqrt(kf.P.diagonal()[j]))           
 
         # save for backtesting
         self.x_col = x_col
         self.df = df
         self.b_df = pd.DataFrame(self.xs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+1, len(df))))
-        ps = pd.DataFrame(self.ps, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+1, len(df))))
-        self.c_df = pd.DataFrame({'lower': self.b_df.sum(axis=1) - conf * ps.sum(axis=1), 'upper': self.b_df.sum(axis=1) + conf * ps.sum(axis=1)}, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+1, len(df))))
+        self.p_df = pd.DataFrame(ps, index=self.b_df.index)
         return self.b_df.cumsum(axis=1)
     
     def backtest(self):
@@ -125,17 +125,23 @@ class KF:
         backtest['res'] = np.sum(self.b_df[i] * backtest[f'{self.x_col}'].shift(i) for i in range(self.lags+1))
         return backtest.dropna()['res']
     
-    def shade_confs(self, alpha=0.1):
+    def shade_cred_intervals(self, crit=1.96, alpha=0.1):
+        self.c_df = pd.DataFrame({'lower': self.b_df.sum(axis=1) - crit * self.p_df.sum(axis=1), 'upper': self.b_df.sum(axis=1) + crit * self.p_df.sum(axis=1)}, index=self.b_df.index)
         plt.fill_between(self.c_df.index, self.c_df['lower'], self.c_df['upper'], alpha=alpha)
     
-    def sig_counts(self, start=0, end=0):
-        if start == 0:
-            start = str(min(self.c_df.index).year)
-        if end == 0:
-            end = str(max(self.c_df.index).year)
-        sliced = self.c_df.loc[start:end]
-        print(f'Start:{start}, End: {end}')
-        print(f"Significant direction (+ve for upwards, -ve for downwards): {len(sliced[sliced['lower'] > 0])/len(sliced) - len(sliced[sliced['upper'] < 0])/len(sliced)}")
+    def plot_likelihood(self, val=0, direction='>', figsize=(20,3)):
+        probs = {i: [] for i in range(self.lags+1)}
+        for ind in self.b_df.index:
+            for j in range(self.lags+1):
+                dist = NormalDist(self.b_df.loc[ind][j], self.p_df.loc[ind][j])
+                if direction == '>':
+                    probs[j].append(1 - dist.cdf(val))
+                elif direction == '<':
+                    probs[j].append(dist.cdf(val))
+                else:
+                    raise ValueError('Direction needs to be either > (default) or <')
+        probs_df = pd.DataFrame(probs, index=self.b_df.index)
+        probs_df.plot(figsize=figsize, title=f'P(state {direction} {val})')
 
 
 class KFConst:
