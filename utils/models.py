@@ -91,7 +91,7 @@ class KF:
         ps = {i: [] for i in range(self.lags+1)}
         kf = KalmanFilter(dim_x=self.lags+1, dim_z=self.lags+1)
         if self.x0 == 0:
-            kf.x = np.array([1 for _ in range(self.lags+1)])
+            kf.x = np.array([0 for _ in range(self.lags+1)])
         kf.F = np.array([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)]) 
         
         df = df.dropna()
@@ -100,7 +100,7 @@ class KF:
         if self.r == 0:
             self.r = df[x_col].var()
         if self.Q == 0:
-            kf.Q = df[x_col].var()
+            kf.Q = 0.01
         kf.P = np.diag([self.p for i in range(self.lags+1)])
         kf.R = np.diag([self.r for i in range(self.lags+1)])
         for i in range(self.lags+1, len(df)):
@@ -125,23 +125,34 @@ class KF:
         backtest['res'] = np.sum(self.b_df[i] * backtest[f'{self.x_col}'].shift(i) for i in range(self.lags+1))
         return backtest.dropna()['res']
     
-    def shade_cred_intervals(self, crit=1.96, alpha=0.1):
+    def shade_cred_intervals(self, p=0.1, alpha=0.08):
+        crit = NormalDist(0, 1).inv_cdf(1 - p)
         self.c_df = pd.DataFrame({'lower': self.b_df.sum(axis=1) - crit * self.p_df.sum(axis=1), 'upper': self.b_df.sum(axis=1) + crit * self.p_df.sum(axis=1)}, index=self.b_df.index)
-        plt.fill_between(self.c_df.index, self.c_df['lower'], self.c_df['upper'], alpha=alpha)
+        plt.fill_between(self.c_df.index, self.c_df['lower'], self.c_df['upper'], alpha=alpha, color='purple')
     
-    def plot_likelihood(self, val=0, direction='>', figsize=(20,3)):
+    def plot_likelihood(self, val=0, direction='>', figsize=(20,3), recessions=True, p=0.1):
         probs = {i: [] for i in range(self.lags+1)}
+        sigs = {}
         for ind in self.b_df.index:
             for j in range(self.lags+1):
                 dist = NormalDist(self.b_df.loc[ind][j], self.p_df.loc[ind][j])
                 if direction == '>':
-                    probs[j].append(1 - dist.cdf(val))
+                    prob = 1 - dist.cdf(val)
                 elif direction == '<':
-                    probs[j].append(dist.cdf(val))
+                    prob = dist.cdf(val)
                 else:
                     raise ValueError('Direction needs to be either > (default) or <')
+                probs[j].append(prob)
+                if prob >= 1-p:
+                    sigs[ind] = prob
         probs_df = pd.DataFrame(probs, index=self.b_df.index)
         probs_df.plot(figsize=figsize, title=f'P(state {direction} {val})')
+        if recessions:
+            r = pd.read_csv('data/recessions.csv')
+            for index, row in r.iterrows():
+                plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
+        if p > 0:
+            plt.scatter(sigs.keys(), sigs.values(), color='green')
 
 
 class KFConst:
@@ -239,12 +250,13 @@ def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(20,5), plo
             print(f'RMSE {k}: {np.sqrt(np.sum((y - res_dict[k]).dropna() ** 2) / len(res_dict[k]))}')
         i += 1
 
-def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, figsize=(20,5), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
+def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, hp_fill=False, figsize=(20,5), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
     df.plot(figsize=figsize, label='Kalman estimates', linewidth=linewidth)
     c, t = hpfilter(df.iloc[:,-1], lamb=129600)
     if hp_trend:
         t.plot(label='HP trend', color='b', alpha=0.8, linewidth=linewidth)
-        plt.fill_between(t.index, [0 for _ in t.index], t, alpha=0.5)
+        if hp_fill:
+            plt.fill_between(t.index, [0 for _ in t.index], t, alpha=0.5)
     if hp_cycle:
         c.plot(label='HP cycle')
     plt.axhline(0, linestyle='--', color='grey', linewidth=linewidth)
