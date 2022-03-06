@@ -39,26 +39,43 @@ def clean_series(col, df, standardize=True, seasonal=True):
         series = series - mth_avg
     return pd.DataFrame(series.rename(col)).dropna().sort_index()
 
-def calc_shock(col, df, method='mad-12', clean=True, standardize=True, seasonal=True):
+def rolling_corr(df, lags=12, plot=True, figsize=(20,3)):
+    """Returns rolling correlation coefficient"""
+    corrs = df.rolling(window=lags).corr().loc[(slice(None), df.columns[0]), df.columns[-1]]
+    if plot:
+        corrs[(slice(None), df.columns[0])].plot(figsize=figsize)
+        plt.axhline(0, linestyle='--', color='grey', alpha=0.5)
+
+def calc_ewma(col, df, l=0.94):
+    """Calculates EWMA std values for entire series"""
+    df = df.copy(deep=True).pct_change().dropna()
+    returns = df[col]
+    Er = np.mean(returns)
+    seed = [(returns[0] - Er)**2]
+    for r in returns:
+        seed.append(l*seed[-1] + (1-l)*(r-Er)**2)
+    df['ewma'] = seed[1:]
+    return pd.DataFrame(df.ewma.rename(col)).dropna().sort_index()
+
+def calc_shock(col, df, method='mad-12', clean=True, standardize=True, seasonal=True, ewma=False):
     """Calculates shock from index value. Can use either naive method in Exploratory1 or 
     moving average method in Exploratory2.
     Returns input column as new DataFrame."""
-    series = df.copy(deep=True)[col]
+    if ewma:
+        series = calc_ewma(col, df)[col]
+    else:
+        series = df.copy(deep=True)[col]
     if method[:3] == 'mad':
-        ma = series.rolling(int(method.split('-')[-1])).mean()
+        ma = series.shift().rolling(int(method.split('-')[-1])).mean()
         series = series.pct_change() - ma.pct_change()
-        if clean:
-            return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), standardize=standardize, seasonal=seasonal)
-        else:
-            return pd.DataFrame(series.rename(col)).dropna().sort_index()
     elif method == 'naive':
         series = series.pct_change().diff()
-        if clean:
-            return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), standardize=standardize, seasonal=seasonal)
-        else:
-            return pd.DataFrame(series.rename(col)).dropna().sort_index()
     else:
         raise ValueError('Check correct method specified!')
+    if clean:
+        return clean_series(col, pd.DataFrame(series.rename(col)).dropna(), standardize=standardize, seasonal=seasonal)
+    else:
+        return pd.DataFrame(series.rename(col)).dropna().sort_index()
 
 
 # data visualization
@@ -96,13 +113,6 @@ def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cum
     if legend:
         plt.legend()
     plt.show()
-
-def rolling_corr(df, lags=12, plot=True, figsize=(20,3)):
-    """Returns rolling correlation coefficient"""
-    corrs = df.rolling(window=lags).corr().loc[(slice(None), df.columns[0]), df.columns[-1]]
-    if plot:
-        corrs[(slice(None), df.columns[0])].plot(figsize=figsize)
-        plt.axhline(0, linestyle='--', color='grey', alpha=0.5)
 
 
 # regressions

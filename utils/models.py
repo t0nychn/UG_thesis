@@ -147,12 +147,13 @@ class KF:
                     sigs[ind] = prob
         probs_df = pd.DataFrame(probs, index=self.b_df.index)
         probs_df.plot(figsize=figsize, title=f'P(state {direction} {val})')
+        plt.axvline('2000-01-01', linestyle='--', color='black')
         if recessions:
             r = pd.read_csv('data/recessions.csv')
             for index, row in r.iterrows():
                 plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
         if p > 0:
-            plt.scatter(sigs.keys(), sigs.values(), color='green')
+            plt.scatter(sigs.keys(), sigs.values(), color='purple')
 
 
 class KFConst:
