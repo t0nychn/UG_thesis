@@ -97,6 +97,13 @@ def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cum
         plt.legend()
     plt.show()
 
+def rolling_corr(df, lags=12, plot=True, figsize=(20,3)):
+    """Returns rolling correlation coefficient"""
+    corrs = df.rolling(window=lags).corr().loc[(slice(None), df.columns[0]), df.columns[-1]]
+    if plot:
+        corrs[(slice(None), df.columns[0])].plot(figsize=figsize)
+        plt.axhline(0, linestyle='--', color='grey', alpha=0.5)
+
 
 # regressions
 def dl(y_col, x_col, df, lags=12, const=True):
