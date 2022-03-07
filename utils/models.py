@@ -146,14 +146,15 @@ class KF:
                 if prob >= 1-p:
                     sigs[ind] = prob
         probs_df = pd.DataFrame(probs, index=self.b_df.index)
-        probs_df.plot(figsize=figsize, title=f'P(state {direction} {val})')
+        probs_df[0].plot(figsize=figsize, title=f'P(state {direction} {val})', alpha=0)
         plt.axvline('2000-01-01', linestyle='--', color='black')
+        plt.fill_between(probs_df.index, 0, probs_df[0], alpha=0.3, color='purple')
         if recessions:
             r = pd.read_csv('data/recessions.csv')
             for index, row in r.iterrows():
                 plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
         if p > 0:
-            plt.scatter(sigs.keys(), sigs.values(), color='purple')
+            plt.scatter(sigs.keys(), sigs.values(), color='blue')
 
 
 class KFConst:
@@ -252,7 +253,7 @@ def backtest(y, res_dict, x_label=False, rmse=True, start=0, figsize=(20,5), plo
         i += 1
 
 def hp_kalman_plot(df, hp_trend=True, hp_cycle=False, hp_fill=False, figsize=(20,5), title=False, linewidth=1.5, splitline=True, recessions=True, geopolitics=False, legend=True):
-    df.plot(figsize=figsize, label='Kalman estimates', linewidth=linewidth)
+    df.plot(figsize=figsize, label='Kalman estimates', linewidth=linewidth, legend=legend)
     c, t = hpfilter(df.iloc[:,-1], lamb=129600)
     if hp_trend:
         t.plot(label='HP trend', color='b', alpha=0.8, linewidth=linewidth)

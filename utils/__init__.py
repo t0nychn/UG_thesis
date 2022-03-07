@@ -54,7 +54,8 @@ def calc_ewma(col, df, l=0.94):
     seed = [(returns[0] - Er)**2]
     for r in returns:
         seed.append(l*seed[-1] + (1-l)*(r-Er)**2)
-    df['ewma'] = seed[1:]
+    df['ewma'] = np.sqrt(seed[1:])
+    df['ewma'].plot()
     return pd.DataFrame(df.ewma.rename(col)).dropna().sort_index()
 
 def calc_shock(col, df, method='mad-12', clean=True, standardize=True, seasonal=True, ewma=False):
