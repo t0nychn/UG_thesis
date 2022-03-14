@@ -46,16 +46,20 @@ def rolling_corr(df, lags=12, plot=True, figsize=(20,3)):
         corrs[(slice(None), df.columns[0])].plot(figsize=figsize)
         plt.axhline(0, linestyle='--', color='grey', alpha=0.5)
 
-def calc_ewma(col, df, l=0.94):
+def calc_ewma(col, df, l=0.6, plot=True, directional=False):
     """Calculates EWMA std values for entire series"""
     df = df.copy(deep=True).pct_change().dropna()
-    returns = df[col]
+    if directional:
+        returns = df[col].apply(lambda x: 0 if x > 0 else x)
+    else:
+        returns = df[col]
     Er = np.mean(returns)
     seed = [(returns[0] - Er)**2]
     for r in returns:
         seed.append(l*seed[-1] + (1-l)*(r-Er)**2)
     df['ewma'] = np.sqrt(seed[1:])
-    df['ewma'].plot()
+    if plot:
+        df['ewma'].plot()
     return pd.DataFrame(df.ewma.rename(col)).dropna().sort_index()
 
 def calc_shock(col, df, method='mad-12', clean=True, standardize=True, seasonal=True, ewma=False):
