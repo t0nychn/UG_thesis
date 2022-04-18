@@ -80,7 +80,57 @@ class KF:
         self.Q = Q
         self.x0 = x0
     
-    def run(self, y_col, x_col, df, show_scatter=False):
+    def run(self, y_col, x_col, df, show_scatter=False, smooth=False):
+        """Latest version capable of smoothing (lag 0 only)"""
+        if show_scatter:
+            plt.scatter(df[x_col], df[y_col])
+            plt.title('Input Data')
+            plt.ylabel(y_col)
+            plt.xlabel(x_col)
+            plt.show()
+        kf = KalmanFilter(dim_x=self.lags+1, dim_z=self.lags+1)
+        if self.x0 == 0:
+            kf.x = np.array([0 for _ in range(self.lags+1)])
+        kf.F = np.array([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)]) 
+        
+        df = df.dropna()
+        if self.p == 0:
+            self.p = df[x_col].var()
+        if self.r == 0:
+            self.r = df[x_col].var()
+        if self.Q == 0:
+            kf.Q = 0.01
+        kf.P = np.diag([self.p for i in range(self.lags+1)])
+        kf.R = np.diag([self.r for i in range(self.lags+1)])
+
+        zs = [np.array([df.iloc[i-l][y_col] for l in range(self.lags+1)]) for i in range(self.lags+1, len(df))]
+        Rs = [kf.R for _ in range(self.lags+1, len(df))]
+        Hs = [np.array([[df.shift(l).iloc[i-j][x_col] for l in range(self.lags+1)]
+                                 for j in range(self.lags+1)]) for i in range(self.lags+1, len(df))]
+        Fs = [kf.F for _ in range(self.lags+1, len(df))]
+        Qs = [kf.Q for _ in range(self.lags+1, len(df))]
+
+        mu, cov, _, _ = kf.batch_filter(zs, Fs=Fs, Rs=Rs, Qs=Qs, Hs=Hs)
+        if smooth:
+            mu, cov, _, _ = kf.rts_smoother(mu, cov, Fs=Fs, Qs=Qs)
+
+        # unpack into dicts
+        xs = {i: [] for i in range(self.lags+1)}
+        ps = {i: [] for i in range(self.lags+1)}
+        for i in range(len(mu)):
+            for j in range(self.lags+1):
+                xs[j].append(mu[i][j])
+                ps[j].append(np.sqrt(cov[i].diagonal()[j]))
+
+        # save for backtesting
+        self.x_col = x_col
+        self.df = df
+        self.b_df = pd.DataFrame(xs, index=(min(df.index) + pd.DateOffset(months=i) for i in range(self.lags+1, len(df))))
+        self.p_df = pd.DataFrame(ps, index=self.b_df.index)
+        return self.b_df.cumsum(axis=1)
+    
+    def _run_depr(self, y_col, x_col, df, show_scatter=False):
+        """Initial implementation - deprecated by batch implementation which allows for smoothing"""
         if show_scatter:
             plt.scatter(df[x_col], df[y_col])
             plt.title('Input Data')
@@ -110,7 +160,7 @@ class KF:
             kf.update(np.array([df.iloc[i-l][y_col] for l in range(self.lags+1)]))
             for j in range(self.lags+1):
                 self.xs[j].append(kf.x[j])
-                ps[j].append(np.sqrt(kf.P.diagonal()[j]))           
+                ps[j].append(np.sqrt(kf.P.diagonal()[j])) # collect std         
 
         # save for backtesting
         self.x_col = x_col
