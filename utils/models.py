@@ -180,9 +180,10 @@ class KF:
         self.c_df = pd.DataFrame({'lower': self.b_df.sum(axis=1) - crit * self.p_df.sum(axis=1), 'upper': self.b_df.sum(axis=1) + crit * self.p_df.sum(axis=1)}, index=self.b_df.index)
         plt.fill_between(self.c_df.index, self.c_df['lower'], self.c_df['upper'], alpha=alpha, color='purple')
     
-    def plot_likelihood(self, val=0, direction='>', figsize=(20,3), recessions=True, p=0.1):
+    def calc_likelihood(self, val=0, direction='>', p=0.1):
+        """Refactored from plot_likelihood to use in mecha"""
         probs = {i: [] for i in range(self.lags+1)}
-        sigs = {}
+        self.sigs = {} # save significant ones for highlighting
         for ind in self.b_df.index:
             for j in range(self.lags+1):
                 dist = NormalDist(self.b_df.loc[ind][j], self.p_df.loc[ind][j])
@@ -194,7 +195,11 @@ class KF:
                     raise ValueError('Direction needs to be either > (default) or <')
                 probs[j].append(prob)
                 if prob >= 1-p:
-                    sigs[ind] = prob
+                    self.sigs[ind] = prob
+        return probs
+
+    def plot_likelihood(self, val=0, direction='>', p=0.1, figsize=(20,3), recessions=True):
+        probs = self.calc_likelihood(val=val, direction=direction, p=p)
         probs_df = pd.DataFrame(probs, index=self.b_df.index)
         probs_df[0].plot(figsize=figsize, title=f'P(state {direction} {val})', alpha=0)
         plt.axvline('2000-01-01', linestyle='--', color='black')
@@ -204,7 +209,7 @@ class KF:
             for index, row in r.iterrows():
                 plt.axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
         if p > 0:
-            plt.scatter(sigs.keys(), sigs.values(), color='blue')
+            plt.scatter(self.sigs.keys(), self.sigs.values(), color='blue')
 
 
 class KFConst:
