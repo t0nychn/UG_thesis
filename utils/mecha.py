@@ -1,7 +1,6 @@
 """This file gives a general framework to automate analysis given input CSV and saves
 results to MySQL database"""
 
-from pydantic import MissingError
 from .models import *
 
 class ADAM:
@@ -25,16 +24,20 @@ class ADAM:
         self.kf = KF(lags=lags)
         self.lags=lags
 
-    def run(self, save_path='data/saved/'):
+    def run(self, save_path='data/saved/', file_ending=''):
         ycount = 0
-        xcount = 0
 
         for y in self.ys:
             ycount += 1
+            xcount = 0
             clean_y = clean_series(y, self.input_df)
 
             for x in self.xs:
                 xcount += 1
+                if x == y or ('GSCI' in x and 'GS' in y) or ('GSCI' in y and 'GS' in x):
+                    print(f'Skipping {y}-{x} pair')
+                    print(f'{ycount}/{len(self.ys)} of ys completed and {xcount}/{len(self.xs)} of xs completed')
+                    continue
                 clean_x = clean_series(x, self.input_df)
                 df = clean_y.join(clean_x)
 
@@ -50,10 +53,9 @@ class ADAM:
                     self.output_probs[f'{y}-{x}-smth'] = [*[np.nan for _ in range(missing)] + list(self.kf.calc_likelihood()[0])]
                     self.output_backtests[f'{y}-{x}-smth'] = self.kf.backtest()
 
-                self.output_betas.to_csv(save_path + 'betas.csv')
-                self.output_probs.to_csv(save_path + 'probs.csv')
-                self.output_backtests.to_csv(save_path + 'backtests.csv')
+                self.output_betas.to_csv(save_path + f'betas{file_ending}.csv')
+                self.output_probs.to_csv(save_path + f'probs{file_ending}.csv')
+                self.output_backtests.to_csv(save_path + f'backtests{file_ending}.csv')
 
                 print(f'Finished analysing {y} and {x}! Results saved to CSV.')
                 print(f'{ycount}/{len(self.ys)} of ys completed and {xcount}/{len(self.xs)} of xs completed')
-
