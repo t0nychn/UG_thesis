@@ -1,6 +1,6 @@
 from utils.mecha import *
 
-ys = {'WTI', 'GSCI', 'GSECI', 'GSNECI', 'heating_oil', 'gas', 'propane'}
-xs = ys.union({'SPX', 'MSCI_ACWI', 'MSCI_W', 'MSCI_EM'})
+ys = {'gold', 'hog', 'lumber', 'oats', 'palladium', 'rubber', 'wheat'}
+xs = {'SPX', 'MSCI_W', 'MSCI_EM', 'GSCI', 'GSNECI', 'GSECI'}
 
-ADAM(ys, xs).run()
+ADAM(ys, xs).run(file_ending='2')

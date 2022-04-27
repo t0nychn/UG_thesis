@@ -59,3 +59,4 @@ class ADAM:
 
                 print(f'Finished analysing {y} and {x}! Results saved to CSV.')
                 print(f'{ycount}/{len(self.ys)} of ys completed and {xcount}/{len(self.xs)} of xs completed')
+                

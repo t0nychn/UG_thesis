@@ -30,8 +30,8 @@ def clean_series(col, df, standardize=True, seasonal=True):
     """standardize=True -> removes effect of changing variance by dividing values by rolling annual standard deviation. 
     seasonal=True -> removes effect of seasonality by subtracting values from collective average of each month across series.
     Returns input column as new DataFrame."""
+    series = df.copy(deep=True)[col]
     if standardize:
-        series = df.copy(deep=True)[col]
         ann_vol = series.index.map(lambda x: series.groupby(series.index.year).std().loc[x.year])
         series = series/ann_vol
     if seasonal:
