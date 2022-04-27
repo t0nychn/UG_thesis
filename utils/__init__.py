@@ -115,6 +115,38 @@ def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cum
         plt.legend()
     plt.show()
 
+def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title_deets='', colours=None, config=None, figsize=(15,10), sharex=True, axhline=True, recessions=True):
+    df = load(f'data/saved/{data}{file_ending}.csv')
+    xcounter = -1
+
+    if config == None:
+        fig, ax = plt.subplots(len(xs), figsize=figsize, sharex=sharex)
+    else:
+        fig, ax = plt.subplots(config, figsize=figsize, sharex=sharex)
+
+    if data_specs == '':
+        data_specs = '-smth'
+
+    r = pd.read_csv('data/recessions.csv')
+
+    for x in xs:
+        xcounter += 1
+        for i in range(len(ys)):
+            y = ys[i]
+            ax[xcounter].set_title(f'{title_deets}{x}')
+            if colours == None:
+                ax[xcounter].plot(df[f'{y}-{x}{data_specs}'], label=y)
+            else:
+                ax[xcounter].plot(df[f'{y}-{x}{data_specs}'], label=y, color=colours[i])
+            if axhline:
+                ax[xcounter].axhline(0, color='grey', linestyle='--')
+        if recessions:
+            for index, row in r.iterrows():
+                ax[xcounter].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
+        ax[xcounter].legend()
+
+    plt.show()
+
 
 # regressions
 def dl(y_col, x_col, df, lags=12, const=True):
