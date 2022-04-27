@@ -95,9 +95,9 @@ class KF:
         
         df = df.dropna()
         if self.p == 0:
-            self.p = df[x_col].var()
+            self.p = df[y_col].var()
         if self.r == 0:
-            self.r = df[x_col].var()
+            self.r = df[y_col].var()
         if self.Q == 0:
             kf.Q = 0.01
         kf.P = np.diag([self.p for i in range(self.lags+1)])
@@ -146,9 +146,9 @@ class KF:
         
         df = df.dropna()
         if self.p == 0:
-            self.p = df[x_col].var()
+            self.p = df[y_col].var()
         if self.r == 0:
-            self.r = df[x_col].var()
+            self.r = df[y_col].var()
         if self.Q == 0:
             kf.Q = 0.01
         kf.P = np.diag([self.p for i in range(self.lags+1)])
@@ -236,9 +236,9 @@ class KFConst:
         
         df = df.dropna()
         if self.p == 0:
-            self.p = df[x_col].var()
+            self.p = df[y_col].var()
         if self.r == 0:
-            self.r = df[x_col].var()
+            self.r = df[y_col].var()
         if self.Q == 0:
             kf.Q = df[x_col].var()
         kf.P = np.diag([self.p for i in range(self.lags+2)])

@@ -1,6 +1,6 @@
 from utils.mecha import *
 
-ys = {'gold', 'hog', 'lumber', 'oats', 'palladium', 'rubber', 'wheat'}
-xs = {'SPX', 'MSCI_W', 'MSCI_EM', 'GSCI', 'GSNECI', 'GSECI'}
+ys = {'DJCI', 'lumber', 'oats', 'palladium', 'rubber', 'gold','hog', 'wheat', 'crude', 'gas', 'GSCI', 'GSNECI', 'GSECI'}
+xs = {'SPX', 'MSCI_W', 'MSCI_EM'}
 
-ADAM(ys, xs).run(file_ending='2')
+ADAM(ys, xs).run(file_ending='-master')
