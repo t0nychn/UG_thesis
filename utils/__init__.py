@@ -115,35 +115,48 @@ def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cum
         plt.legend()
     plt.show()
 
-def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title_deets='', colours=None, config=None, figsize=(15,10), sharex=True, axhline=True, recessions=True):
+def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title_deets='', colours=None, config='together', figsize=(15,10), sharex=True, sharey=True, axhline=True, recessions=True):
     df = load(f'data/saved/{data}{file_ending}.csv')
-    xcounter = -1
 
-    if config == None:
+    if config == 'together':
         fig, ax = plt.subplots(len(xs), figsize=figsize, sharex=sharex)
-    else:
-        fig, ax = plt.subplots(config, figsize=figsize, sharex=sharex)
+    elif config == 'apart':
+        fig, ax = plt.subplots(len(xs), len(ys), figsize=figsize, sharex=sharex, sharey=sharey)
 
     if data_specs == '':
         data_specs = '-smth'
 
     r = pd.read_csv('data/recessions.csv')
 
-    for x in xs:
-        xcounter += 1
-        for i in range(len(ys)):
-            y = ys[i]
-            ax[xcounter].set_title(f'{title_deets}{x}')
+    for i in range(len(xs)):
+        x = xs[i]
+        for j in range(len(ys)):
+            y = ys[j]
+            if config == 'together':
+                ax_setting = i
+            elif config == 'apart':
+                ax_setting = (i, j)
+
+            ax[ax_setting].set_title(f'{title_deets}{x}')
             if colours == None:
-                ax[xcounter].plot(df[f'{y}-{x}{data_specs}'], label=y)
+                ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y)
             else:
-                ax[xcounter].plot(df[f'{y}-{x}{data_specs}'], label=y, color=colours[i])
+                ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y, color=colours[j])
             if axhline:
-                ax[xcounter].axhline(0, color='grey', linestyle='--')
-        if recessions:
-            for index, row in r.iterrows():
-                ax[xcounter].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
-        ax[xcounter].legend()
+                ax[ax_setting].axhline(0, color='grey', linestyle='--')
+            if config == 'apart':
+                if recessions:
+                    for index, row in r.iterrows():
+                        ax[ax_setting].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
+                ax[ax_setting].legend()
+                ax[ax_setting].tick_params(axis='x', rotation=90)
+
+        if config == 'together':
+            if recessions:
+                for index, row in r.iterrows():
+                    ax[ax_setting].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
+            ax[ax_setting].legend()
+            plt.xticks(rotation=90)
 
     plt.show()
 
