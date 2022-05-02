@@ -39,12 +39,14 @@ def clean_series(col, df, standardize=True, seasonal=True):
         series = series - mth_avg
     return pd.DataFrame(series.rename(col)).dropna().sort_index()
 
-def rolling_corr(df, lags=12, plot=True, figsize=(20,3)):
+def rolling_corr(df, lags=60, plot=True, figsize=(20,3)):
     """Returns rolling correlation coefficient"""
     corrs = df.rolling(window=lags).corr().loc[(slice(None), df.columns[0]), df.columns[-1]]
     if plot:
         corrs[(slice(None), df.columns[0])].plot(figsize=figsize)
         plt.axhline(0, linestyle='--', color='grey', alpha=0.5)
+    else:
+        return corrs[(slice(None), df.columns[0])]
 
 def calc_ewma(col, df, l=0.6, plot=True):
     """Calculates EWMA std values for entire series"""
@@ -137,7 +139,6 @@ def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title
             elif config == 'apart':
                 ax_setting = (i, j)
 
-            ax[ax_setting].set_title(f'{title_deets}{x}')
             if colours == None:
                 ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y)
             else:
@@ -145,19 +146,21 @@ def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title
             if axhline:
                 ax[ax_setting].axhline(0, color='grey', linestyle='--')
             if config == 'apart':
+                ax[ax_setting].set_title(f'{title_deets}{y}, {x}')
                 if recessions:
                     for index, row in r.iterrows():
                         ax[ax_setting].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
-                ax[ax_setting].legend()
                 ax[ax_setting].tick_params(axis='x', rotation=90)
 
         if config == 'together':
+            ax[ax_setting].set_title(f'{title_deets}{x}')
             if recessions:
                 for index, row in r.iterrows():
                     ax[ax_setting].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
             ax[ax_setting].legend()
-            plt.xticks(rotation=90)
 
+    if config == 'apart':
+        plt.tight_layout()
     plt.show()
 
 
