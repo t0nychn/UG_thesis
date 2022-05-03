@@ -1,0 +1,227 @@
+@ARTICLE{Gorton-Rouwenhorst,
+    title = {Facts and Fantasies About Commodity Futures},
+    author = {Gorton, G. and Rouwenhorst, K.},
+    year = {2006},
+    journal = {Financial Analysts Journal},
+	volume = {62(2)},
+	pages = {47-68}
+}
+@ARTICLE{Fattouh-Kilian-Mahadeva,
+    title = {The Role of Speculation in Oil Markets: What Have We Learned So Far?},
+    author = {Fattouh, B. and Kilian, L. and Mahadeva, L.},
+    year = {2013},
+    journal = {The Energy Journal},
+	volume = {34(3)},
+	pages = {7-33}
+}
+@ARTICLE{Buyuksahin-Haigh-Robe,
+    title = {Commodities and equities: ever a 'market of
+one'?},
+    author = {Buyuksahin, B. and Haigh, M. and Robe, M.},
+    year = {2010},
+    journal = {Journal of Alternative Investments},
+	volume = {12(3)},
+	pages = {76-95}
+}
+@ARTICLE{Tang-Xiong,
+    title = {Index Investing and the Financialization of Commodities},
+    author = {Tang, K. and Xiong, W.},
+    year = {2012},
+    journal = {Financial Analysts Journal},
+	volume = {68(6)},
+	pages = {54-74}
+}
+@ARTICLE{Working,
+    title = {Speculation on Hedging Markets},
+    author = {Working, H.},
+    year = {1960},
+    journal = {Stanford University Food Research Institute Studies},
+	volume = {1},
+	pages = {185-220}
+}
+@ARTICLE{Cheng-Xiong,
+    title = {Financialization of Commodity Markets},
+    author = {Cheng, I.-H. and Xiong, W.},
+    year = {2014},
+    journal = {Annual Review of
+Financial Economics},
+	volume = {6},
+	pages = {419-441}
+}
+@ARTICLE{Masters,
+    title = {Testimony before the Committee on Homeland Security and Governmental Affairs},
+    author = {Masters, M.},
+    year = {2008},
+    addendum = {Tech.
+Rep., US Senate, Washington, DC, May 20th}
+}
+@ARTICLE{Basak-Pavolova,
+    title = {A Model of Financialization of Commodities},
+    author = {Basak, S. and Pavlova, A.},
+    year = {2016},
+    journal = {The Journal of Finance},
+	volume = {71(4)},
+	pages = {1511-1556}
+}
+@ARTICLE{Faff-Hillier-Hillier,
+    title = {Time Varying Beta Risk: An Analysis of Alternative Modelling Techniques},
+    author = {Faff, R. and Hillier, D. and Hillier, J.},
+    year = {2003},
+    journal = {Journal of Business Finance and Accounting},
+	volume = {27(5)},
+	pages = {523-554}
+}
+@ONLINE{Renzi-Ricci,
+    title = {Estimating Equity Betas: What Can a Time-Varying Approach Add?},
+    author = {Renzi-Ricci, G.},
+    year = {2016},
+    url = {https://www.nera.com/content/dam/nera/publications/2016/PUB_Estimating_Equity_Betas_0916.pdf#:~:text=The%20Kalman%20filter%20is%20a%20recursive%20algorithm%2C%20i.e.%2C,that%20OLS%20techniques%20have%20in%20measuring%20time-varying%20betas.},
+    addendum = "(Accessed \today)"
+}
+@ARTICLE{Fama-French,
+    title = {The Capital Asset Pricing Model: Theory and Evidence},
+    author = {Fama, E. and Kenneth, F.},
+    year = {2004},
+    journal = {Journal of Economic Perspectives},
+	volume = {18(3)},
+	pages = {25-46}
+}
+@ONLINE{Labbe,
+    title = {FilterPy - Kalman filters and other optimal and non-optimal estimation filters in Python},
+    author = {Labbe, R.},
+    year = {2015},
+    url = {https://github.com/rlabbe/filterpy},
+    addendum = "(Accessed \today)"
+}
+@ONLINE{SPGlobal2022a,
+    title = {S\&P GSCI Methodology},
+    author = {{S\&P Global}},
+    year = {2022},
+    url = {https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-gsci.pdf},
+    addendum = "(Accessed \today)"
+}
+@ONLINE{SPGlobal2021,
+    title = {Dow Jones Commodity Index Methodology},
+    author = {{S\&P Global}},
+    year = {2021},
+    url = {https://www.spglobal.com/spdji/en/documents/methodologies/methodology-dj-commodity-index.pdf},
+    addendum = "(Accessed \today)"
+}
+@BOOK{Anson,
+    title = {Handbook of Alternative Assets},
+    year = {2008},
+    author = {Anson, M.},
+    publisher = {Wiley},
+    edition = {2}
+}
+@ONLINE{Bloomberg,
+    author = {Bloomberg},
+    year = {2022},
+    title = {Index Methodology},
+    url = {https://assets.bbhub.io/professional/sites/10/BCOM-Methodology-MAR-2022_FINAL.pdf},
+    addendum = "(Accessed \today)"
+}
+@ONLINE{Barchart.com,
+    author = {Barchart.com},
+    year = {2019},
+    title = {cmdty BLS Commodity Price Indexes},
+    url = {https://www.barchart.com/cmdty/media/pdfs/cmdty_BLS_Commodity_Price_Index_Methodology.pdf},
+    addendum = "(Accessed \today)"
+}
+@ONLINE{SPGlobal2022b,
+    title = {S\&P US Indices Methodology},
+    author = {{S\&P Global}},
+    year = {2022},
+    url = {https://www.spglobal.com/spdji/en/documents/methodologies/methodology-sp-us-indices.pdf},
+    addendum = "(Accessed \today)"
+}
+@ARTICLE{Daskalaki,
+    title = {Are there common factors in individual commodity futures returns?},
+    author = {Daskalaki, C. and Kostakis, A. and Skiadopoulos, G.},
+    year = {2014},
+    journal = {Journal of Banking and Finance},
+	volume = {40},
+	pages = {346-363}
+}
+@ARTICLE{Silvennoinen-Thorpe,
+    title = {Financialization, crisis and commodity correlation dynamics},
+    author = {Silvennoinen, A. and Thorpe, S.},
+    year = {2013},
+    journal = {Journal of International Financial Markets, Institutions and Money},
+	volume = {24},
+	pages = {42-65}
+}
+@ARTICLE{Isleimeyyeh,
+    title = {The Role of Financial Investors in Determining the Commodity Futures Risk Premium},
+    author = {Isleimeyyeh, M.},
+    year = {forthcoming},
+    journal = {Journal of Futures Markets},
+	volume = {},
+	pages = {}
+}
+@ARTICLE{Baumeister-Kilian,
+    title = {A General Approach to Recovering Market Expectations from Futures Prices With an Application to Crude Oil},
+    author = {Baumeister, C. and Kilian, L.},
+    year = {2016},
+    journal = {CESifo Working Paper Series No. 5782},
+	volume = {},
+	pages = {}
+}
+@BOOK{Hamilton,
+    title = {Time Series Analysis},
+    year = {1994},
+    author = {Hamilton, J.},
+    publisher = {Princeton University Press},
+    edition = {}
+}
+@ARTICLE{Belsley,
+    title = {The Applicability of the Kalman Filter in the Determination of Systematic Parameter Variation},
+    author = {Belsley, D.},
+    year = {1973},
+    journal = {Annals of Economic and Social Measurement},
+	volume = {2(4)},
+	pages = {531-533}
+}
+@Book{Malkiel,
+    title = {A Random Walk Down Wall Street},
+    year = {1973},
+    author = {Malkiel, B.},
+    publisher = {W. W. Norton & Company}
+}
+@ARTICLE{Garrat-Petrella,
+    title = {Commodity prices and inflation risk},
+    author = {Garrat, A. and Petrella, I.},
+    year = {2022},
+    journal = {Journal of Applied Econometrics},
+	volume = {37(2)},
+	pages = {392-414}
+}
+@ONLINE{Schroders,
+    title = {Gold - the only “safe haven” asset?},
+    author = {Schroders},
+    year = {2022},
+    url = {https://www.schroders.com/en/uk/private-investor/insights/markets/gold---the-only-safe-haven-asset/},
+    addendum = "(Accessed \today)"
+}
+@ARTICLE{Kilian-Hicks,
+    title = {Did Unexpectedly Strong Economic Growth Cause the Oil Price Shock of 2003–2008?},
+    author = {Kilian, L. and Hicks, B.},
+    year = {2012},
+    journal = {Journal of Forecasting},
+	volume = {32(5)},
+	pages = {389-394}
+}
+@ARTICLE{Hamilton-Wu,
+    title = {Effects of Index-Fund Investing on Commodity Futures Prices},
+    author = {Hamilton, J. and Wu, J.},
+    year = {2015},
+    journal = {International Economic Review},
+	volume = {56(7)},
+	pages = {187-205}
+}
+@Book{Soros,
+    title = {The Alchemy of Finance},
+    author = {Soros, G.},
+    year = {1988},
+    publisher = {Simon \& Schuster}
+}

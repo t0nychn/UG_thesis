@@ -52,7 +52,7 @@ def calc_ewma(col, df, l=0.6, plot=True):
     """Calculates EWMA std values for entire series"""
     df = df.copy(deep=True).pct_change().dropna()
     returns = df[col]
-    seed = [(returns[0] - 0)**2]
+    seed = [returns[0]**2]
     for r in returns:
         seed.append(l*seed[-1] + (1-l)*(r-0)**2)
     df['ewma'] = np.sqrt(seed[1:])
