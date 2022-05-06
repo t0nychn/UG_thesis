@@ -139,25 +139,29 @@ def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title
             elif config == 'apart':
                 ax_setting = (i, j)
 
+            if data == 'betas':
+                ax[ax_setting].set_ylim([-0.5, 1])
+
             if colours == None:
-                ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y)
+                ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y.replace('hog', 'hogs'))
             else:
-                ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y, color=colours[j])
+                ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y.replace('hog', 'hogs'), color=colours[j])
             if axhline:
                 ax[ax_setting].axhline(0, color='grey', linestyle='--')
             if config == 'apart':
-                ax[ax_setting].set_title(f'{title_deets}{y}, {x}')
+                ax[ax_setting].set_title(f"{title_deets}{y.replace('hog', 'hogs')}, {x}")
                 if recessions:
                     for index, row in r.iterrows():
                         ax[ax_setting].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
                 ax[ax_setting].tick_params(axis='x', rotation=90)
 
         if config == 'together':
-            ax[ax_setting].set_title(f'{title_deets}{x}')
+            ax[ax_setting].set_title(f"{title_deets}{x.replace('_', '-')}")
             if recessions:
                 for index, row in r.iterrows():
                     ax[ax_setting].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
-            ax[ax_setting].legend()
+            if ax_setting == 0:
+                ax[ax_setting].legend()
 
     if config == 'apart':
         plt.tight_layout()
