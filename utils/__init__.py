@@ -149,7 +149,7 @@ def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title
             if axhline:
                 ax[ax_setting].axhline(0, color='grey', linestyle='--')
             if config == 'apart':
-                ax[ax_setting].set_title(f"{title_deets}{y.replace('hog', 'hogs')}, {x}")
+                ax[ax_setting].set_title(f"{title_deets}{y.replace('hog', 'hogs')}, {x.replace('_', '-')}")
                 if recessions:
                     for index, row in r.iterrows():
                         ax[ax_setting].axvspan(pd.to_datetime(row['start'], dayfirst=True), pd.to_datetime(row['end'], dayfirst=True), color='grey', alpha=0.2)
