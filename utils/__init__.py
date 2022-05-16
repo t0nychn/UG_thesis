@@ -117,7 +117,7 @@ def draw(models, start=1, periods=12, conf_int=False, bse=True, legend=True, cum
         plt.legend()
     plt.show()
 
-def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title_deets='', colours=None, config='together', figsize=(15,10), sharex=True, sharey=True, axhline=True, recessions=True):
+def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title_deets='', colours=None, config='together', figsize=(15,10), sharex=True, sharey=True, axhline=0, recessions=True):
     df = load(f'data/saved/{data}{file_ending}.csv')
 
     if config == 'together':
@@ -146,8 +146,8 @@ def multi_plot(ys, xs, data='betas', data_specs='', file_ending='-master', title
                 ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y.replace('hog', 'hogs'))
             else:
                 ax[ax_setting].plot(df[f'{y}-{x}{data_specs}'], label=y.replace('hog', 'hogs'), color=colours[j])
-            if axhline:
-                ax[ax_setting].axhline(0, color='grey', linestyle='--')
+            if axhline != None:
+                ax[ax_setting].axhline(axhline, color='grey', linestyle='--')
             if config == 'apart':
                 ax[ax_setting].set_title(f"{title_deets}{y.replace('hog', 'hogs')}, {x.replace('_', '-')}")
                 if recessions:
