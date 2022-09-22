@@ -91,7 +91,7 @@ class KF:
         kf = KalmanFilter(dim_x=self.lags+1, dim_z=self.lags+1)
         if self.x0 == 0:
             kf.x = np.array([0 for _ in range(self.lags+1)])
-        kf.F = np.array([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)]) 
+        kf.F = np.diag(np.diag(([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)])))
         
         df = df.dropna()
         if self.p == 0:
@@ -142,7 +142,7 @@ class KF:
         kf = KalmanFilter(dim_x=self.lags+1, dim_z=self.lags+1)
         if self.x0 == 0:
             kf.x = np.array([0 for _ in range(self.lags+1)])
-        kf.F = np.array([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)]) 
+        kf.F = np.diag(np.diag(([[1 for _ in range(self.lags+1)] for _ in range(self.lags+1)])))
         
         df = df.dropna()
         if self.p == 0:
